@@ -65,3 +65,43 @@ def test_twochar_tokens():
             Token(TokenType.EQ), 
         ]
     )
+
+def test_eof():
+    assert_output(
+        "test",
+        [
+            Token(TokenType.IDENT, "test"), 
+            Token(TokenType.EOF), 
+            Token(TokenType.EOF), 
+            Token(TokenType.EOF)
+        ]
+    )
+
+def test_comma():
+    assert_output(
+        "test,,,",
+        [
+            Token(TokenType.IDENT, "test"), 
+            Token(TokenType.COMMA), 
+            Token(TokenType.COMMA), 
+            Token(TokenType.COMMA)
+        ]
+    )
+    assert_output(
+        "12,,,",
+        [
+            Token(TokenType.INT, "12"), 
+            Token(TokenType.COMMA), 
+            Token(TokenType.COMMA), 
+            Token(TokenType.COMMA)
+        ]
+    )
+    assert_output(
+        "\"test\",,,",
+        [
+            Token(TokenType.STRING, "test"), 
+            Token(TokenType.COMMA), 
+            Token(TokenType.COMMA), 
+            Token(TokenType.COMMA)
+        ]
+    )

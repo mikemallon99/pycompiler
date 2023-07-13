@@ -1,15 +1,77 @@
-from pycompiler.lexer import TokenType, Token
-from typing import Optional
-from enum import Enum
+from pycompiler.lexer import TokenType, Token, Lexer
+from typing import Optional, List, Tuple
+from enum import IntEnum
 
 
-class Precedence(Enum):
+class Precedence(IntEnum):
     LOWEST = 1
     PREFIX = 10
 
 
 def get_precedence(token_type: TokenType) -> Precedence:
     return Precedence.LOWEST
+
+
+class Statement:
+    pass
+
+
+class Expression:
+    pass
+
+
+class LetStatement(Statement):
+    def __init__(self, ident: Token, expr: Expression):
+        assert ident.token_type == TokenType.IDENT
+        self.ident: Token = ident
+        self.expr: Expression = expr
+
+    def __eq__(self, other: Statement):
+        if not isinstance(other, LetStatement):
+            return NotImplemented
+        return self.ident == other.ident and self.expr == other.expr
+
+    def __repr__(self):
+        return f"<LetStatement: ident={ident}, expr={self.expr}>"
+
+
+class ReturnStatement(Statement):
+    def __init__(self, expr: Expression):
+        self.expr: Expression = expr
+
+    def __eq__(self, other: Statement):
+        if not isinstance(other, ReturnStatement):
+            return NotImplemented
+        return self.expr == other.expr
+
+    def __repr__(self):
+        return f"<ReturnStatement: expr={self.expr}>"
+
+
+class ExpressionStatement(Statement):
+    def __init__(self, expr: Expression):
+        self.expr: Expression = expr
+
+    def __eq__(self, other: Statement):
+        if not isinstance(other, ExpressionStatement):
+            return NotImplemented
+        return self.expr == other.expr
+
+    def __repr__(self):
+        return f"<ExpressionStatement: expr={self.expr}>"
+
+
+class BlockStatement(Statement):
+    def __init__(self, statements: List[Statement]):
+        self.statements: List[Statement] = statements
+
+    def __eq__(self, other: Statement):
+        if not isinstance(other, BlockStatement):
+            return NotImplemented
+        return self.statements == other.statements
+
+    def __repr__(self):
+        return f"<BlockStatement: statements={self.statements}>"
 
 
 class Literal:
@@ -20,11 +82,27 @@ class IdentifierLiteral(Literal):
     def __init__(self, token: Token):
         self.token: Token = token
 
+    def __eq__(self, other: Literal):
+        if not isinstance(other, IdentifierLiteral):
+            return NotImplemented
+        return self.token == other.token
+
+    def __repr__(self):
+        return f"<IdentifierLiteral: token={self.token}>"
+
 
 class IntLiteral(Literal):
     def __init__(self, token: Token, value: int):
         self.token: Token = token
         self.value: int = value
+
+    def __eq__(self, other: Literal):
+        if not isinstance(other, IntLiteral):
+            return NotImplemented
+        return self.token == other.token and self.value == other.value
+
+    def __repr__(self):
+        return f"<IntLiteral: token={self.token}, value={self.value}>"
 
 
 class StringLiteral(Literal):
@@ -32,11 +110,27 @@ class StringLiteral(Literal):
         self.token: Token = token
         self.value: str = value
 
+    def __eq__(self, other: Literal):
+        if not isinstance(other, StringLiteral):
+            return NotImplemented
+        return self.token == other.token and self.value == other.value
+
+    def __repr__(self):
+        return f"<StringLiteral: token={self.token}, value={self.value}>"
+
 
 class FunctionLiteral(Literal):
     def __init__(self, arguments: List[Token], body: BlockStatement):
         self.arguments: List[Token] = arguments
         self.body: BlockStatement = body
+
+    def __eq__(self, other: Literal):
+        if not isinstance(other, FunctionLiteral):
+            return NotImplemented
+        return self.arguments == other.arguments and self.body == other.body
+
+    def __repr__(self):
+        return f"<FunctionLiteral: arguments={self.arguments}, body={self.body}>"
 
 
 class BooleanLiteral(Literal):
@@ -44,10 +138,26 @@ class BooleanLiteral(Literal):
         self.token: Token = token
         self.value: bool = value
 
+    def __eq__(self, other: Literal):
+        if not isinstance(other, BooleanLiteral):
+            return NotImplemented
+        return self.token == other.token and self.value == other.value
+
+    def __repr__(self):
+        return f"<BooleanLiteral: token={self.token}, value={self.value}>"
+
 
 class ArrayLiteral(Literal):
     def __init__(self, members: List[Expression]):
         self.members: List[Expression] = members
+
+    def __eq__(self, other: Literal):
+        if not isinstance(other, ArrayLiteral):
+            return NotImplemented
+        return self.members == other.members
+
+    def __repr__(self):
+        return f"<ArrayLiteral: members={self.members}>"
 
 
 ExpressionPair = Tuple[Expression, Expression]
@@ -55,20 +165,40 @@ class MapLiteral(Literal):
     def __init__(self, pairs: List[ExpressionPair]):
         self.pairs: List[ExpressionPair] = pairs
 
+    def __eq__(self, other: Literal):
+        if not isinstance(other, MapLiteral):
+            return NotImplemented
+        return self.pairs == other.pairs
 
-class Expression:
-    pass
+    def __repr__(self):
+        return f"<MapLiteral: pairs={self.pairs}>"
 
 
 class LiteralExpression(Expression):
     def __init__(self, literal: Literal):
         self.literal: Literal = literal
 
+    def __eq__(self, other: Expression):
+        if not isinstance(other, LiteralExpression):
+            return NotImplemented
+        return self.literal == other.literal
+
+    def __repr__(self):
+        return f"<LiteralExpression: literal={self.literal}>"
+
 
 class PrefixExpression(Expression):
     def __init__(self, operator: Token, right: Expression):
         self.operator: Token = operator
         self.right: Expression = right
+
+    def __eq__(self, other: Expression):
+        if not isinstance(other, PrefixExpression):
+            return NotImplemented
+        return self.operator == other.operator and self.right == other.right
+
+    def __repr__(self):
+        return f"<PrefixExpression: operator={self.operator}, right={self.right}>"
 
 
 class InfixExpression(Expression):
@@ -77,6 +207,14 @@ class InfixExpression(Expression):
         self.operator: Token = operator
         self.right: Expression = right
 
+    def __eq__(self, other: Expression):
+        if not isinstance(other, InfixExpression):
+            return NotImplemented
+        return self.left == other.left and self.operator == other.operator and self.right == other.right
+
+    def __repr__(self):
+        return f"<InfixExpression: left={self.left}, operator={self.operator}, right={self.right}>"
+
 
 class IfExpression(Expression):
     def __init__(self, condition: Expression, consequence: BlockStatement, alternative: Optional[BlockStatement] = None):
@@ -84,37 +222,31 @@ class IfExpression(Expression):
         self.consequence: BlockStatement = consequence
         self.alternative: Optional[BlockStatement] = alternative
 
+    def __eq__(self, other: Expression):
+        if not isinstance(other, IfExpression):
+            return NotImplemented
+        return (
+            self.condition == other.condition and 
+            self.consequence == other.consequence and 
+            self.alternative == other.alternative
+        )
+
+    def __repr__(self):
+        return f"<IfExpression: condition={self.condition}, consequence={self.consequence}, alternative={self.alternative}>"
+
 
 class CallExpression(Expression):
     def __init__(self, func: Expression, args: List[Expression]):
         self.func: Expression = func
         self.args: List[Expression] = args
 
+    def __eq__(self, other: Expression):
+        if not isinstance(other, CallExpression):
+            return NotImplemented
+        return self.func == other.func and self.args == other.args
 
-class Statement:
-    pass
-
-
-class LetStatement(Statement):
-    def __init__(self, ident: Token, expr: Expression):
-        assert ident.token_type == TokenType.IDENT
-        self.ident: Token = ident
-        self.expr: Expression = expr
-
-
-class ReturnStatement(Statement):
-    def __init__(self, expr: Expression):
-        self.expr: Expression = expr
-
-
-class ExpressionStatement(Statement):
-    def __init__(self, expr: Expression):
-        self.expr: Expression = expr
-
-
-class BlockStatement(Statement):
-    def __init__(self, statements: List[Statement]):
-        self.statements: List[Statement] = statements
+    def __repr__(self):
+        return f"<CallExpression: func={self.func}, args={self.args}>"
 
 
 class UnexpectedTokenError(Exception):
@@ -127,7 +259,6 @@ class Parser:
         self.lexer: Lexer = lexer
         self.cur_token: Token = self.lexer.next_token()
         self.peek_token: Token = self.lexer.next_token()
-        self.errors: List[str] = []
 
     def parse(self) -> List[Statement]:
         program: List[Statement] = []
@@ -141,29 +272,31 @@ class Parser:
     def _parse_statement(self) -> Statement:
         match self.cur_token.token_type:
             case TokenType.LET:
-                self._parse_let_statement()
+                statement: LetStatement = self._parse_let_statement()
             case TokenType.RETURN:
-                self._parse_return_statement()
+                statement: ReturnStatement = self._parse_return_statement()
             case _:
-                self._parse_expression_statement()
+                statement: ExpressionStatement = self._parse_expression_statement()
 
         # Semicolons optional
         if self.peek_token.token_type == TokenType.SEMICOLON:
             self._next_token()
 
+        return statement
+
     def _parse_let_statement(self) -> LetStatement:
         # Skip over let token
         identifier: Token = self._expect_peek(TokenType.IDENT)
         self._expect_peek(TokenType.ASSIGN)
-        return LetStatement(identifier, self._parse_expression())
+        return LetStatement(identifier, self._parse_expression(Precedence.LOWEST))
 
     def _parse_return_statement(self) -> ReturnStatement:
         # Skip over return token
         self._next_token()
-        return ReturnStatement(self._parse_expression())
+        return ReturnStatement(self._parse_expression(Precedence.LOWEST))
 
     def _parse_expression_statement(self) -> ExpressionStatement:
-        return ExpressionStatement(self._parse_expression())
+        return ExpressionStatement(self._parse_expression(Precedence.LOWEST))
 
     def _parse_block_statement(self) -> BlockStatement:
         statements: List[Statement] = []
@@ -172,8 +305,17 @@ class Parser:
             self._next_token()
         return BlockStatement(statements)
 
-    def _parse_expression(self, precedence: Precedence):
-        if self.cur_token.token_type in [TokenType.IDENT, TokenType.INT, TokenType.TRUE, TokenType.FALSE, TokenType.STRING]:
+    def _parse_expression(self, precedence: Precedence) -> Expression:
+        if self.cur_token.token_type in [
+            TokenType.IDENT, 
+            TokenType.INT, 
+            TokenType.TRUE, 
+            TokenType.FALSE, 
+            TokenType.STRING, 
+            TokenType.FUNCTION,
+            TokenType.LBRACKET,
+            TokenType.LBRACE
+        ]:
             left_expr = self._parse_literal()
         elif self.cur_token.token_type in [TokenType.MINUS, TokenType.BANG]:
             left_expr = self._parse_prefix()
@@ -181,16 +323,10 @@ class Parser:
             left_expr = self._parse_group()
         elif self.cur_token.token_type == TokenType.IF:
             left_expr = self._parse_if()
-        elif self.cur_token.token_type == TokenType.FUNCTION:
-            left_expr = self._parse_function()
-        elif self.cur_token.token_type == TokenType.LBRACKET:
-            left_expr = self._parse_array()
-        elif self.cur_token.token_type == TokenType.LBRACE:
-            left_expr = self._parse_map()
         else:
             raise Exception(f"Did not find expression function for token type {self.cur_token.token_type.value}")
 
-        while self.peek_token.token_type != TokenType.SEMICOLON and precedence < self._get_precedence(self.peek_token):
+        while self.peek_token.token_type != TokenType.SEMICOLON and precedence < get_precedence(self.peek_token):
             cur_token: Token = self._next_token()
             if cur_token.token_type == TokenType.LPAREN:
                 left_expr = self._parse_call(left_expr)
@@ -211,6 +347,12 @@ class Parser:
                 literal = BooleanLiteral(self.cur_token, False)
             case TokenType.STRING:
                 literal = StringLiteral(self.cur_token, self.cur_token.token_value)
+            case TokenType.FUNCTION:
+                literal = self._parse_function()
+            case TokenType.LBRACKET:
+                literal = self._parse_array()
+            case TokenType.LBRACE:
+                literal = self._parse_map()
             case _:
                 raise Exception(f"Cannot create literal expression from token type: {self.cur_token.token_type.value}")
         
@@ -267,7 +409,7 @@ class Parser:
         params: List[Token] = []
         while True:
             params.append(self._next_token())
-            if self._peek_token.token_type == TokenType.RPAREN:
+            if self.peek_token.token_type == TokenType.RPAREN:
                 self._next_token()
                 break
             else:
@@ -283,7 +425,8 @@ class Parser:
         members: List[Expression] = []
         while True:
             members.append(self._parse_expression(Precedence.LOWEST))
-            if self._peek_token.token_type == TokenType.RBRACKET:
+            print(members)
+            if self.peek_token.token_type == TokenType.RBRACKET:
                 self._next_token()
                 break
             else:
@@ -305,7 +448,7 @@ class Parser:
             value_expression = self._parse_expression(Precedence.LOWEST)
             pairs.append((key_expression, value_expression))
 
-            if self._peek_token.token_type == TokenType.RBRACE:
+            if self.peek_token.token_type == TokenType.RBRACE:
                 self._next_token()
                 break
             else:
@@ -323,7 +466,7 @@ class Parser:
         arguments: List[Expression] = []
         while True:
             arguments.append(self._parse_expression(Precedence.LOWEST))
-            if self._peek_token.token_type == TokenType.RPAREN:
+            if self.peek_token.token_type == TokenType.RPAREN:
                 self._next_token()
                 break
             else:

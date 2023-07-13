@@ -130,17 +130,17 @@ class Lexer:
             return self.input_string[self.read_position]
 
     def _read_identifier(self) -> str:
-        identifier = ""
-        while self._is_letter(self.cur_byte) or self._is_number(self.cur_byte):
-            identifier += self.cur_byte
+        identifier = self.cur_byte
+        while self._is_letter(self._peek_char()) or self._is_number(self._peek_char()):
             self._read_char()
+            identifier += self.cur_byte
         return identifier
 
     def _read_int(self) -> str:
-        number = ""
-        while self._is_number(self.cur_byte):
-            number += self.cur_byte
+        number = self.cur_byte
+        while self._is_number(self._peek_char()):
             self._read_char()
+            number += self.cur_byte
         return number
 
     def _read_string(self) -> str:
@@ -151,14 +151,11 @@ class Lexer:
         while self.cur_byte != TokenType.DB_QUOTE.value:
             string += self.cur_byte
             self._read_char()
-            
-        # Advance last quote
-        self._read_char()
 
         return string
 
     def _is_letter(self, value):
-        return ((value >= 'a' and value <= 'z') or (value >= 'A' and value <= 'Z')) and value != TokenType.EOF.value
+        return ((value >= 'a' and value <= 'z') or (value >= 'A' and value <= 'Z') or value == '_') and value != TokenType.EOF.value
 
     def _is_number(self, value):
         return (value >= '0' and value <= '9') and value != TokenType.EOF.value
@@ -166,3 +163,5 @@ class Lexer:
     def _skip_whitespace(self):
         while self.cur_byte in [' ', '\t', '\n', '\r']:
             self._read_char()
+
+
