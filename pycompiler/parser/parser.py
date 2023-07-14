@@ -505,7 +505,6 @@ class Parser:
         
 
     def _parse_infix(self, left: Expression):
-        print("yo")
         operator: Token = self.cur_token
         self._next_token()
         # Parse expression in brackets for arrays
