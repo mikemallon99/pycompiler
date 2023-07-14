@@ -361,3 +361,82 @@ def test_call_expression():
         ]
     )
 
+def test_multiple_statements():
+    assert_parser_output(
+        "let x = 69; 2 * 2; return x;", 
+        [
+            LetStatement(
+                Token(TokenType.IDENT, "x"),
+                LiteralExpression(
+                    IntLiteral(
+                        Token(TokenType.INT, "69"),
+                        69
+                    )
+                )
+            ),
+            ExpressionStatement(
+                InfixExpression(
+                    LiteralExpression(
+                        IntLiteral(
+                            Token(TokenType.INT, "2"),
+                            2
+                        )
+                    ),
+                    Token(TokenType.ASTERISK),
+                    LiteralExpression(
+                        IntLiteral(
+                            Token(TokenType.INT, "2"),
+                            2
+                        )
+                    ),
+                )
+            ),
+            ReturnStatement(
+                LiteralExpression(
+                    IdentifierLiteral(
+                        Token(TokenType.IDENT, "x")
+                    )
+                )
+            ),
+        ]
+    )
+
+def test_precedence():
+    assert_parser_output(
+        "12 + x * ( y - 3 )", 
+        [
+            ExpressionStatement(
+                InfixExpression(
+                    LiteralExpression(
+                        IntLiteral(
+                            Token(TokenType.INT, "12"),
+                            12
+                        )
+                    ),
+                    Token(TokenType.PLUS),
+                    InfixExpression(
+                        LiteralExpression(
+                            IdentifierLiteral(
+                                Token(TokenType.IDENT, "x")
+                            )
+                        ),
+                        Token(TokenType.ASTERISK),
+                        InfixExpression(
+                            LiteralExpression(
+                                IdentifierLiteral(
+                                    Token(TokenType.IDENT, "y"),
+                                )
+                            ),
+                            Token(TokenType.MINUS),
+                            LiteralExpression(
+                                IntLiteral(
+                                    Token(TokenType.INT, "3"),
+                                    3
+                                )
+                            ),
+                        )
+                    )
+                )
+            )
+        ]
+    )
