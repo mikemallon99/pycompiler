@@ -5,11 +5,39 @@ from enum import IntEnum
 
 class Precedence(IntEnum):
     LOWEST = 1
-    PREFIX = 10
+    EQUALS = 2
+    LESSGREATER = 3
+    SUM = 4
+    PRODUCT = 5
+    PREFIX = 6
+    CALL = 7
+    INDEX = 8
 
 
-def get_precedence(token_type: TokenType) -> Precedence:
-    return Precedence.LOWEST
+def get_precedence(token: Token) -> Precedence:
+    match token.token_type:
+        case TokenType.EQ:
+            return Precedence.EQUALS;
+        case TokenType.NOT_EQ:
+            return Precedence.EQUALS;
+        case TokenType.LT:
+            return Precedence.LESSGREATER;
+        case TokenType.GT:
+            return Precedence.LESSGREATER;
+        case TokenType.PLUS:
+            return Precedence.SUM;
+        case TokenType.MINUS:
+            return Precedence.SUM;
+        case TokenType.SLASH:
+            return Precedence.PRODUCT;
+        case TokenType.ASTERISK:
+            return Precedence.PRODUCT;
+        case TokenType.LPAREN:
+            return Precedence.CALL;
+        case TokenType.LBRACKET:
+            return Precedence.INDEX;
+        case _:
+            return Precedence.LOWEST;
 
 
 class Statement:
@@ -32,7 +60,7 @@ class LetStatement(Statement):
         return self.ident == other.ident and self.expr == other.expr
 
     def __repr__(self):
-        return f"<LetStatement: ident={ident}, expr={self.expr}>"
+        return f"<LetStatement: ident={self.ident}, expr={self.expr}>"
 
 
 class ReturnStatement(Statement):
@@ -288,6 +316,7 @@ class Parser:
         # Skip over let token
         identifier: Token = self._expect_peek(TokenType.IDENT)
         self._expect_peek(TokenType.ASSIGN)
+        self._next_token()
         return LetStatement(identifier, self._parse_expression(Precedence.LOWEST))
 
     def _parse_return_statement(self) -> ReturnStatement:
@@ -379,13 +408,13 @@ class Parser:
 
         self._expect_peek(TokenType.LBRACE)
         self._next_token()
-        consequence: BlockStatement = self._parse_block_statement(Precedence.LOWEST)
+        consequence: BlockStatement = self._parse_block_statement()
 
         if self.peek_token.token_type == TokenType.ELSE:
             self._next_token()
             self._expect_peek(TokenType.LBRACE)
             self._next_token()
-            alternative: BlockStatement = self._parse_block_statement(Precedence.LOWEST)
+            alternative: BlockStatement = self._parse_block_statement()
             return IfExpression(condition, consequence, alternative)
         else:
             return IfExpression(condition, consequence)
@@ -425,7 +454,6 @@ class Parser:
         members: List[Expression] = []
         while True:
             members.append(self._parse_expression(Precedence.LOWEST))
-            print(members)
             if self.peek_token.token_type == TokenType.RBRACKET:
                 self._next_token()
                 break
@@ -443,7 +471,7 @@ class Parser:
         pairs: List[ExpressionPair] = []
         while True:
             key_expression = self._parse_expression(Precedence.LOWEST)
-            self._expect_token(TokenType.COLON)
+            self._expect_peek(TokenType.COLON)
             self._next_token()
             value_expression = self._parse_expression(Precedence.LOWEST)
             pairs.append((key_expression, value_expression))
@@ -461,7 +489,7 @@ class Parser:
         # Parse arguments
         self._next_token()
         if self.cur_token.token_type == TokenType.RPAREN:
-            return CallExpression(function, arguments)
+            return CallExpression(function, [])
 
         arguments: List[Expression] = []
         while True:
@@ -477,11 +505,14 @@ class Parser:
         
 
     def _parse_infix(self, left: Expression):
+        print("yo")
         operator: Token = self.cur_token
         self._next_token()
         # Parse expression in brackets for arrays
         if operator.token_type == TokenType.LBRACKET:
-            return InfixExpression(left, operator, self._parse_expression(Precedence.LOWEST))
+            expression = InfixExpression(left, operator, self._parse_expression(Precedence.LOWEST))
+            self._expect_peek(TokenType.RBRACKET)
+            return expression
         # Regular infix expression
         else:
             return InfixExpression(left, operator, self._parse_expression(get_precedence(operator)))
