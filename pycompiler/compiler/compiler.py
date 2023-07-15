@@ -3,7 +3,7 @@ from pycompiler.objects import (
     Object,
     IntObject
 )
-from pycompiler.code import Instruction, Opcode, make
+from pycompiler.code import Instructions, Opcode, make
 from pycompiler.parser import (
     Statement, 
     LetStatement,
@@ -17,11 +17,11 @@ from pycompiler.parser import (
     IntLiteral
 )
 
-Bytecode = Tuple[List[Instruction], List[Object]]
+Bytecode = Tuple[Instructions, List[Object]]
 
 class Compiler:
     def __init__(self):
-        self.instructions: List[Instruction] = []
+        self.instructions: Instructions = Instructions()
         self.constants: List[Object] = []
 
     def compile(self, ast: List[Statement]):
@@ -61,12 +61,13 @@ class Compiler:
         self.constants.append(constant)
         return len(self.constants) - 1
         
-    def _add_instruction(self, instruction: Instruction) -> int:
-        self.instructions.append(instruction)
-        return len(self.instructions) - 1
+    def _add_instruction(self, instruction: Instructions) -> int:
+        pos: int = len(self.instructions)
+        self.instructions += instruction
+        return pos
 
     def _emit(self, op: Opcode, operands: List[int]=[]) -> int:
-        ins: Instruction = make(op, operands)
+        ins: Instructions = make(op, operands)
         pos: int = self._add_instruction(ins)
         return pos
 

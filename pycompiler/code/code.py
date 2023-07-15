@@ -7,38 +7,42 @@ class Opcode(Enum):
     NULL = auto()
 
 
-class Instruction:
-    def __init__(self, encoding: bytearray):
-        self.encoding: bytearray = encoding
+Instructions = bytearray
 
-    def __eq__(self, other: Any):
-        if not isinstance(other, Instruction):
-            return NotImplemented
-        return self.encoding == other.encoding
+def instructions_to_str(instructions: Instructions) -> str:
+    out_string: str = ""
 
-    def __str__(self) -> str:
-        op = Opcode.NULL
-        for member in Opcode:
-            if self.encoding[0] == member.value:
-                op = member
-                break
+    i: int = 0
+    while i < len(instructions):
+        op: Opcode = lookup_opcode(instructions[i])
+        out_string += "{:04X}".format(i)
+        out_string += f" {op.name}"
 
-        # Convert from encoding back into operands
-        operands: List[int] = []
-        match op:
-            case Opcode.CONSTANT:
-                operands = [int.from_bytes(self.encoding[1:], byteorder='big')]
-
-        out_string: str = op.name
+        operands, read = read_operands(op, instructions[i+1:])
         for operand in operands:
             out_string += f" {operand}"
-        return out_string
 
-    def __repr__(self):
-        return f"Instruction: {self.__str__()}"
+        i += 1 + read
 
 
-def make(op: Opcode, operands: List[int]=[]) -> Instruction:
+def lookup_opcode(op_bytes: bytes) -> Opcode:
+    op = Opcode.NULL
+    for member in Opcode:
+        if op_bytes == member.value:
+            op = member
+            break
+    return op
+
+
+def read_operands(op: Opcode, operands: bytearray) -> Tuple[List[int], int]:
+    match op:
+        case Opcode.CONSTANT:
+            return int.from_bytes(operands[0:2], byteorder='big'), 2
+        case _:
+            return NotImplemented
+
+
+def make(op: Opcode, operands: List[int]=[]) -> Instructions:
     instruction: bytearray = bytearray(1)
     instruction[0] = op.value
 
@@ -47,4 +51,6 @@ def make(op: Opcode, operands: List[int]=[]) -> Instruction:
             instruction += bytearray(2)
             instruction[1:] = operands[0].to_bytes(2, byteorder='big')
 
-    return Instruction(instruction)
+    return instruction
+
+

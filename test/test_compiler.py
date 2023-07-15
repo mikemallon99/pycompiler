@@ -2,23 +2,27 @@ import builtins
 from typing import List, Any
 
 from pycompiler.compiler import Compiler
-from pycompiler.code import make, Opcode, Instruction
+from pycompiler.code import make, Opcode, Instructions, instructions_to_str
 from pycompiler.objects import Object, IntObject
 from pycompiler.parser import Parser
 from pycompiler.lexer import Lexer
 
 def pytest_assertrepr_compare(op, left, right):
-    if isinstance(left, Instruction) and isinstance(right, Instruction) and op == "==":
+    if isinstance(left, Instructions) and isinstance(right, Instructions) and op == "==":
         return [
             "Instructions differ:",
-            "   vals: {} != {}".format(str(left), str(right)),
+            "   vals: {} != {}".format(instructions_to_str(left), instructions_to_str(right)),
         ]
 
 def run_compiler_test(
             test_prog: str, 
             exp_consts: List[Any], 
-            exp_insts: List[Instruction]
+            exp_insts: List[Instructions]
         ):
+    concat_insts = bytearray()
+    for ins in exp_insts:
+        concat_insts += ins
+    
     # Convert const values to objects
     const_objects: List[Objects] = []
     for exp_const in exp_consts:
@@ -32,7 +36,7 @@ def run_compiler_test(
     compiler = Compiler()
     compiler.compile(ast)
 
-    assert compiler.instructions == exp_insts
+    assert compiler.instructions == concat_insts
     assert compiler.constants == const_objects
 
 def test_integer_arithmetic():
