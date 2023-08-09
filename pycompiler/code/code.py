@@ -22,7 +22,10 @@ def instructions_to_str(instructions: Instructions) -> str:
         for operand in operands:
             out_string += f" {operand}"
 
+        out_string += "\n"
         i += 1 + read
+
+    return out_string
 
 
 def lookup_opcode(op_bytes: bytes) -> Opcode:
@@ -37,7 +40,7 @@ def lookup_opcode(op_bytes: bytes) -> Opcode:
 def read_operands(op: Opcode, operands: bytearray) -> Tuple[List[int], int]:
     match op:
         case Opcode.CONSTANT:
-            return int.from_bytes(operands[0:2], byteorder='big'), 2
+            return [int.from_bytes(operands[0:2], byteorder='big')], 2
         case _:
             return NotImplemented
 
