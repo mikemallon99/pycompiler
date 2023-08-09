@@ -1,13 +1,14 @@
 from pycompiler.objects import Object
-from pycompiler.code import Instructions
+from pycompiler.compiler import Bytecode
+from pycompiler.code import Instructions, Opcode
 
 STACK_SIZE = 2048
 
 
 class VM:
-    def __init__(self):
-        self.constants: List[Object] = []
-        self.instructions: Instructions = Instructions()
+    def __init__(self, bytecode: Bytecode):
+        self.instructions: Instructions = bytecode[0]
+        self.constants: List[Object] = bytecode[1]
         
         self.stack: List[Object] = [Object()] * STACK_SIZE
         self.sp: int = 0

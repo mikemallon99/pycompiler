@@ -32,7 +32,7 @@ class Compiler:
                 case _:
                     raise NotImplemented
 
-        return [], []
+        return self.instructions, self.constants
 
     def _compile_expression(self, expression: Expression):
         match expression:
