@@ -1,4 +1,4 @@
-from pycompiler.code import Opcode, Instructions, make, instructions_to_str
+from pycompiler.code import Opcode, Instructions, make, instructions_to_str, read_operands, lookup_opcode
 
 def test_make_constant():
     instruction: Instructions = make(Opcode.CONSTANT, [65534])
@@ -23,3 +23,11 @@ def test_instr_strings():
         concatted += ins
 
     assert instructions_to_str(concatted) == expected
+
+# For decoding an instruction
+def test_read_operands():
+    instruction = make(Opcode.CONSTANT, [65535])
+    opcode = lookup_opcode(instruction[0])
+    operands, bytes_read = read_operands(opcode, instruction[1:])
+    assert operands == [65535]
+    assert bytes_read == 2
