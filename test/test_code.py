@@ -5,17 +5,22 @@ def test_make_constant():
     assert instruction[0] == Opcode.CONSTANT.value
     assert instruction[1:] == (65534).to_bytes(2, byteorder='big')
 
+def test_make_add():
+    instruction: Instructions = make(Opcode.ADD, [])
+    assert instruction[0] == Opcode.ADD.value
+    assert instruction[1:] == bytearray()
+
 def test_instr_strings():
     instructions: List[Instructions] = [
-        make(Opcode.CONSTANT, [1]),
+        make(Opcode.ADD, []),
         make(Opcode.CONSTANT, [2]),
         make(Opcode.CONSTANT, [65535]),
     ]
 
     expected = (
-        "0000 CONSTANT 1\n"
-        "0003 CONSTANT 2\n"
-        "0006 CONSTANT 65535\n"
+        "0000 ADD\n"
+        "0001 CONSTANT 2\n"
+        "0004 CONSTANT 65535\n"
     )
 
     concatted: Instructions = bytearray()

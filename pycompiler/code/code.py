@@ -4,6 +4,18 @@ from enum import Enum, auto
 
 class Opcode(Enum):
     CONSTANT = auto()
+    TRUE = auto()
+    FALSE = auto()
+    ADD = auto()
+    SUB = auto()
+    MUL = auto()
+    DIV = auto()
+    POP = auto()
+    EQUAL = auto()
+    NOTEQUAL = auto()
+    GREATERTHAN = auto()
+    MINUS = auto()
+    BANG = auto()
     NULL = auto()
 
 
@@ -42,7 +54,7 @@ def read_operands(op: Opcode, operands: bytearray) -> Tuple[List[int], int]:
         case Opcode.CONSTANT:
             return [int.from_bytes(operands[0:2], byteorder='big')], 2
         case _:
-            return NotImplemented
+            return [], 0
 
 
 def make(op: Opcode, operands: List[int]=[]) -> Instructions:

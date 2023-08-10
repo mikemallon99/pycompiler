@@ -4,7 +4,7 @@ from typing import List, Any
 from pycompiler.compiler import Compiler
 from pycompiler.vm import VM
 from pycompiler.code import make, Opcode, Instructions, instructions_to_str
-from pycompiler.objects import Object, IntObject
+from pycompiler.objects import Object, IntObject, BooleanObject
 from pycompiler.parser import Parser
 from pycompiler.lexer import Lexer
 
@@ -21,10 +21,10 @@ def run_vm_test(
         ):
     ast: List[Statement] = Parser(Lexer(test_prog)).parse()
     compiler = Compiler()
-    bytecode = compiler.compile(ast)
-    vm = VM(bytecode)
+    compiler.compile(ast)
+    vm = VM(compiler.bytecode())
     vm.run()
-    assert vm.stack_top() == exp_obj
+    assert vm.last_popped() == exp_obj
 
 
 def test_integer_arithmetic():
@@ -40,4 +40,94 @@ def test_integer_arithmetic():
         "1 + 2",
         IntObject(3)
     )
+    run_vm_test(
+        "6 - 2",
+        IntObject(4)
+    )
+    run_vm_test(
+        "5 * 4",
+        IntObject(20)
+    )
+    run_vm_test(
+        "4 / 2",
+        IntObject(2)
+    )
 
+    run_vm_test(
+        "5 * 4 * 2 * 3",
+        IntObject(120)
+    )
+    run_vm_test(
+        "5 + 4 * (2 - 3)",
+        IntObject(1)
+    )
+
+def test_boolean():
+    run_vm_test(
+        "true",
+        BooleanObject(True)
+    )
+    run_vm_test(
+        "false",
+        BooleanObject(False)
+    )
+
+def test_comparison():
+    run_vm_test(
+        "1 == 2",
+        BooleanObject(False)
+    )
+    run_vm_test(
+        "5 == 5",
+        BooleanObject(True)
+    )
+    run_vm_test(
+        "1 != 2",
+        BooleanObject(True)
+    )
+    run_vm_test(
+        "5 != 5",
+        BooleanObject(False)
+    )
+    run_vm_test(
+        "true != true",
+        BooleanObject(False)
+    )
+    run_vm_test(
+        "false == false",
+        BooleanObject(True)
+    )
+    run_vm_test(
+        "1 < 2",
+        BooleanObject(True)
+    )
+    run_vm_test(
+        "1 > 2",
+        BooleanObject(False)
+    )
+    run_vm_test(
+        "2 > 1",
+        BooleanObject(True)
+    )
+    run_vm_test(
+        "2 < 1",
+        BooleanObject(False)
+    )
+
+def test_prefix():
+    run_vm_test(
+        "-5",
+        IntObject(-5)
+    )
+    run_vm_test(
+        "-5 + 10",
+        IntObject(5)
+    )
+    run_vm_test(
+        "!true",
+        BooleanObject(False)
+    )
+    run_vm_test(
+        "!(2 > 3)",
+        BooleanObject(True)
+    )
