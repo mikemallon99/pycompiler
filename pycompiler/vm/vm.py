@@ -40,22 +40,22 @@ class VM:
     def run(self) -> Optional[Error]:
         ip = 0 
         while ip < len(self.instructions):
-            op = self.instructions[ip]
-            if op == Opcode.CONSTANT.value:
+            op = Opcode(self.instructions[ip])
+            if op == Opcode.CONSTANT:
                 index = int.from_bytes(self.instructions[ip+1:ip+3], byteorder='big')
                 ip += 2
                 err = self.push(self.constants[index])
                 if err:
                     return err
-            elif op == Opcode.ADD.value or op == Opcode.SUB.value or op == Opcode.MUL.value or op == Opcode.DIV.value:
+            elif op == Opcode.ADD or op == Opcode.SUB or op == Opcode.MUL or op == Opcode.DIV:
                 err = self._execute_binary_op(op)
                 if err:
                     return err
-            elif op == Opcode.EQUAL.value or op == Opcode.NOTEQUAL.value or op == Opcode.GREATERTHAN.value:
+            elif op == Opcode.EQUAL or op == Opcode.NOTEQUAL or op == Opcode.GREATERTHAN:
                 err = self._execute_comparison(op)
                 if err:
                     return err
-            elif op == Opcode.BANG.value:
+            elif op == Opcode.BANG:
                 operand: Object = self.pop()
                 match bool(operand.value):
                     case True:
@@ -68,7 +68,7 @@ class VM:
                             return err
                     case _:
                         return "Bang operation failed."
-            elif op == Opcode.MINUS.value:
+            elif op == Opcode.MINUS:
                 operand: Object = self.pop()
                 if isinstance(operand, IntObject):
                     err = self.push(IntObject(-1 * operand.value))
@@ -76,15 +76,15 @@ class VM:
                         return err
                 else:
                     return "- prefix is not supported for input type"
-            elif op == Opcode.TRUE.value:
+            elif op == Opcode.TRUE:
                 err = self.push(BooleanObject(True))
                 if err:
                     return err
-            elif op == Opcode.FALSE.value:
+            elif op == Opcode.FALSE:
                 err = self.push(BooleanObject(False))
                 if err:
                     return err
-            elif op == Opcode.POP.value:
+            elif op == Opcode.POP:
                 self.pop()
             ip += 1
 
@@ -98,13 +98,13 @@ class VM:
             right_val: int = right.value
             left_val: int = left.value
             match op:
-                case Opcode.ADD.value:
+                case Opcode.ADD:
                     out_val = left_val + right_val
-                case Opcode.SUB.value:
+                case Opcode.SUB:
                     out_val = left_val - right_val
-                case Opcode.MUL.value:
+                case Opcode.MUL:
                     out_val = left_val * right_val
-                case Opcode.DIV.value:
+                case Opcode.DIV:
                     out_val = left_val / right_val
                 case _:
                     return f"IntObject arithmetic not found for {op}"
@@ -125,11 +125,11 @@ class VM:
             right_val: int = right.value
             left_val: int = left.value
             match op:
-                case Opcode.EQUAL.value:
+                case Opcode.EQUAL:
                     out_val = left_val == right_val
-                case Opcode.NOTEQUAL.value:
+                case Opcode.NOTEQUAL:
                     out_val = left_val != right_val
-                case Opcode.GREATERTHAN.value:
+                case Opcode.GREATERTHAN:
                     out_val = left_val > right_val
                 case _:
                     return f"IntObject comparison not found for {op}"
@@ -138,11 +138,11 @@ class VM:
                 return err
         else:
             match op:
-                case Opcode.EQUAL.value:
+                case Opcode.EQUAL:
                     err = self.push(BooleanObject(left.value == right.value))
-                case Opcode.NOTEQUAL.value:
+                case Opcode.NOTEQUAL:
                     err = self.push(BooleanObject(left.value != right.value))
-                case Opcode.GREATERTHAN.value:
+                case Opcode.GREATERTHAN:
                     err = self.push(BooleanObject(left.value > right.value))
                 case _:
                     return f"Object comparison not found for {op}"

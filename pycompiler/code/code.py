@@ -16,6 +16,8 @@ class Opcode(Enum):
     GREATERTHAN = auto()
     MINUS = auto()
     BANG = auto()
+    JUMPCOND = auto()
+    JUMP = auto()
     NULL = auto()
 
 
@@ -53,6 +55,10 @@ def read_operands(op: Opcode, operands: bytearray) -> Tuple[List[int], int]:
     match op:
         case Opcode.CONSTANT:
             return [int.from_bytes(operands[0:2], byteorder='big')], 2
+        case Opcode.JUMPCOND:
+            return [int.from_bytes(operands[0:2], byteorder='big')], 2
+        case Opcode.JUMP:
+            return [int.from_bytes(operands[0:2], byteorder='big')], 2
         case _:
             return [], 0
 
@@ -63,6 +69,12 @@ def make(op: Opcode, operands: List[int]=[]) -> Instructions:
 
     match op:
         case Opcode.CONSTANT:
+            instruction += bytearray(2)
+            instruction[1:] = operands[0].to_bytes(2, byteorder='big')
+        case Opcode.JUMPCOND:
+            instruction += bytearray(2)
+            instruction[1:] = operands[0].to_bytes(2, byteorder='big')
+        case Opcode.JUMP:
             instruction += bytearray(2)
             instruction[1:] = operands[0].to_bytes(2, byteorder='big')
 

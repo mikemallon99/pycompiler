@@ -14,6 +14,7 @@ from pycompiler.parser import (
     LiteralExpression,
     InfixExpression,
     PrefixExpression,
+    IfExpression,
     Literal,
     IntLiteral,
     BooleanLiteral,
@@ -22,10 +23,18 @@ from pycompiler.parser import (
 Bytecode = Tuple[Instructions, List[Object]]
 Error = str
 
+class EmittedInstruction:
+    def __init__(self, opcode: Opcode, pos: int):
+        self.opcode = opcode
+        self.pos = pos
+
 class Compiler:
     def __init__(self):
         self.instructions: Instructions = Instructions()
         self.constants: List[Object] = []
+
+        self.last_ins = EmittedInstruction(Opcode.NULL, 9999)
+        self.prev_ins = EmittedInstruction(Opcode.NULL, 9999)
 
     def compile(self, ast: List[Statement]) -> Error:
         for statement in ast:
@@ -98,6 +107,28 @@ class Compiler:
                         self._emit(Opcode.GREATERTHAN, [])
                     case _:
                         return f"Infix for {expression.operator.token_type} not implemented."
+            case IfExpression():
+                err = self._compile_expression(expression.condition)
+                if err:
+                    return err
+                jumpcond_op_pos: int = self._emit(Opcode.JUMPCOND, [9999])
+                err = self.compile(expression.consequence.statements)
+                if err:
+                    return err
+                if self._last_ins_is_pop():
+                    self._remove_last_ins()
+                after_cons_pos = len(self.instructions)
+                self._change_operand(jumpcond_op_pos, [after_cons_pos])
+
+                if expression.alternative:
+                    jump_op_pos: int = self._emit(Opcode.JUMP, [9999])
+                    err = self.compile(expression.alternative.statements)
+                    if err:
+                        return err
+                    if self._last_ins_is_pop():
+                        self._remove_last_ins()
+                    after_alt_pos = len(self.instructions)
+                    self._change_operand(jump_op_pos, [after_alt_pos])
             case _:
                 return f"Expression {expression} not implemented"
 
@@ -136,5 +167,21 @@ class Compiler:
     def _emit(self, op: Opcode, operands: List[int]=[]) -> int:
         ins: Instructions = make(op, operands)
         pos: int = self._add_instruction(ins)
+        self.prev_ins = self.last_ins
+        self.last_ins = EmittedInstruction(op, pos)
         return pos
+
+    def _last_ins_is_pop(self) -> bool:
+        return self.last_ins.opcode == Opcode.POP
+
+    def _remove_last_ins(self) -> None:
+        self.instructions = self.instructions[:self.last_ins.pos]
+        self.last_ins = self.prev_ins
+
+    def _replace_ins(self, pos: int, new_ins: Instructions) -> None:
+        self.instructions[pos:pos+len(new_ins)] = new_ins
+
+    def _change_operand(self, op_pos: int, operands: List[int]) -> None:
+        new_ins = make(Opcode(self.instructions[op_pos]), operands)
+        self._replace_ins(op_pos, new_ins)
 

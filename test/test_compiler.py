@@ -162,3 +162,56 @@ def test_prefixes():
         ]
     )
 
+    run_compiler_test(
+        "!true",
+        [],
+        [
+            make(Opcode.TRUE, []),
+            make(Opcode.BANG, []),
+            make(Opcode.POP, []),
+        ]
+    )
+
+def test_jumps():
+    run_compiler_test(
+        "if (true) {5}; 3333;",
+        [5, 3333],
+        [
+            # 0000
+            make(Opcode.TRUE, []),
+            # 0001
+            make(Opcode.JUMPCOND, [7]),
+            # 0004
+            make(Opcode.CONSTANT, [0]),
+            # 0007
+            make(Opcode.POP, []),
+            # 0008
+            make(Opcode.CONSTANT, [1]),
+            # 0011
+            make(Opcode.POP, []),
+        ]
+    )
+
+    run_compiler_test(
+        "if (false) {5} else {10}; 3333;",
+        [5, 10, 3333],
+        [
+            # 0000
+            make(Opcode.FALSE, []),
+            # 0001
+            make(Opcode.JUMPCOND, [7]),
+            # 0004
+            make(Opcode.CONSTANT, [0]),
+            # 0007
+            make(Opcode.JUMP, [13]),
+            # 0010
+            make(Opcode.CONSTANT, [1]),
+            # 0013
+            make(Opcode.POP, []),
+            # 0014
+            make(Opcode.CONSTANT, [2]),
+            # 0017
+            make(Opcode.POP, []),
+        ]
+    )
+
