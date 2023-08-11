@@ -4,7 +4,7 @@ from typing import List, Any
 from pycompiler.compiler import Compiler
 from pycompiler.vm import VM
 from pycompiler.code import make, Opcode, Instructions, instructions_to_str
-from pycompiler.objects import Object, IntObject, BooleanObject
+from pycompiler.objects import Object, IntObject, BooleanObject, NullObject
 from pycompiler.parser import Parser
 from pycompiler.lexer import Lexer
 
@@ -131,3 +131,30 @@ def test_prefix():
         "!(2 > 3)",
         BooleanObject(True)
     )
+
+def test_prefix():
+    run_vm_test(
+        "if (true) {10}",
+        IntObject(10)
+    )
+    run_vm_test(
+        "if (true) {10} else {20}",
+        IntObject(10)
+    )
+    run_vm_test(
+        "if (false) {10} else {20}; 30",
+        IntObject(30)
+    )
+    run_vm_test(
+        "if (true) {10} else {20}; 30",
+        IntObject(30)
+    )
+    run_vm_test(
+        "if (1 < 2) {10} else {20}",
+        IntObject(10)
+    )
+    run_vm_test(
+        "if (false) {10}",
+        NullObject()
+    )
+

@@ -117,18 +117,21 @@ class Compiler:
                     return err
                 if self._last_ins_is_pop():
                     self._remove_last_ins()
+                jump_op_pos: int = self._emit(Opcode.JUMP, [9999])
                 after_cons_pos = len(self.instructions)
                 self._change_operand(jumpcond_op_pos, [after_cons_pos])
 
                 if expression.alternative:
-                    jump_op_pos: int = self._emit(Opcode.JUMP, [9999])
                     err = self.compile(expression.alternative.statements)
                     if err:
                         return err
                     if self._last_ins_is_pop():
                         self._remove_last_ins()
-                    after_alt_pos = len(self.instructions)
-                    self._change_operand(jump_op_pos, [after_alt_pos])
+                else:
+                    self._emit(Opcode.NULL, [])
+                after_alt_pos = len(self.instructions)
+                self._change_operand(jump_op_pos, [after_alt_pos])
+
             case _:
                 return f"Expression {expression} not implemented"
 

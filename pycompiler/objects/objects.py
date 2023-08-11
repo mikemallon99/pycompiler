@@ -3,6 +3,15 @@ from pycompiler.parser import FunctionLiteral
 class Object:
     pass
 
+class NullObject:
+    def __eq__(self, other: Object):
+        if not isinstance(other, NullObject):
+            return NotImplemented
+        return True
+
+    def __repr__(self):
+        return f"<NullObject>"
+
 class IntObject(Object):
     def __init__(self, value: int):
         self.value: int = value

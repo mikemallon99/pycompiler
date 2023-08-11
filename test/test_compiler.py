@@ -180,14 +180,18 @@ def test_jumps():
             # 0000
             make(Opcode.TRUE, []),
             # 0001
-            make(Opcode.JUMPCOND, [7]),
+            make(Opcode.JUMPCOND, [10]),
             # 0004
             make(Opcode.CONSTANT, [0]),
             # 0007
-            make(Opcode.POP, []),
-            # 0008
-            make(Opcode.CONSTANT, [1]),
+            make(Opcode.JUMP, [11]),
+            # 0010
+            make(Opcode.NULL, []),
             # 0011
+            make(Opcode.POP, []),
+            # 0012
+            make(Opcode.CONSTANT, [1]),
+            # 0015
             make(Opcode.POP, []),
         ]
     )
@@ -199,7 +203,7 @@ def test_jumps():
             # 0000
             make(Opcode.FALSE, []),
             # 0001
-            make(Opcode.JUMPCOND, [7]),
+            make(Opcode.JUMPCOND, [10]),
             # 0004
             make(Opcode.CONSTANT, [0]),
             # 0007

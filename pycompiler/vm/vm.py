@@ -1,4 +1,4 @@
-from pycompiler.objects import Object, IntObject, BooleanObject
+from pycompiler.objects import Object, IntObject, BooleanObject, NullObject
 from pycompiler.compiler import Bytecode
 from pycompiler.code import Instructions, Opcode, lookup_opcode
 
@@ -84,8 +84,21 @@ class VM:
                 err = self.push(BooleanObject(False))
                 if err:
                     return err
+            elif op == Opcode.JUMP:
+                pos = int.from_bytes(self.instructions[ip+1:ip+3], byteorder='big')
+                ip = pos - 1
+            elif op == Opcode.JUMPCOND:
+                pos = int.from_bytes(self.instructions[ip+1:ip+3], byteorder='big')
+                ip += 2
+
+                if not self._is_truthy(self.pop()):
+                    ip = pos - 1
             elif op == Opcode.POP:
                 self.pop()
+            elif op == Opcode.NULL:
+                err = self.push(NullObject())
+                if err:
+                    return err
             ip += 1
 
         return None
@@ -151,3 +164,5 @@ class VM:
 
         return None
 
+    def _is_truthy(self, obj: Object) -> bool:
+        return bool(obj.value)
