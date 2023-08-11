@@ -71,6 +71,10 @@ def test_boolean():
         "false",
         BooleanObject(False)
     )
+    run_vm_test(
+        "!(if (false) {5})",
+        BooleanObject(True)
+    )
 
 def test_comparison():
     run_vm_test(

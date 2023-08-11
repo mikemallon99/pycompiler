@@ -57,17 +57,9 @@ class VM:
                     return err
             elif op == Opcode.BANG:
                 operand: Object = self.pop()
-                match bool(operand.value):
-                    case True:
-                        err = self.push(BooleanObject(False))
-                        if err:
-                            return err
-                    case False:
-                        err = self.push(BooleanObject(True))
-                        if err:
-                            return err
-                    case _:
-                        return "Bang operation failed."
+                err = self.push(BooleanObject(not self._is_truthy(operand)))
+                if err:
+                    return err
             elif op == Opcode.MINUS:
                 operand: Object = self.pop()
                 if isinstance(operand, IntObject):
@@ -165,4 +157,7 @@ class VM:
         return None
 
     def _is_truthy(self, obj: Object) -> bool:
-        return bool(obj.value)
+        if isinstance(obj, NullObject):
+            return False
+        else:
+            return bool(obj.value)
