@@ -18,7 +18,10 @@ from pycompiler.parser import (
     Literal,
     IntLiteral,
     BooleanLiteral,
+    IdentifierLiteral,
 )
+
+from .symbols import SymbolTable, Symbol
 
 Bytecode = Tuple[Instructions, List[Object]]
 Error = str
@@ -36,6 +39,8 @@ class Compiler:
         self.last_ins = EmittedInstruction(Opcode.NULL, 9999)
         self.prev_ins = EmittedInstruction(Opcode.NULL, 9999)
 
+        self.symbol_table: SymbolTable = SymbolTable()
+
     def compile(self, ast: List[Statement]) -> Error:
         for statement in ast:
             match statement:
@@ -45,6 +50,14 @@ class Compiler:
                         return err
                     # Need to cleanup the expression from the stack once its executed
                     self._emit(Opcode.POP, [])
+                case LetStatement():
+                    err = self._compile_expression(statement.expr)
+                    if err:
+                        return err
+
+                    # Assign result of expression to identifier
+                    symbol = self.symbol_table.define(statement.ident.token_value)
+                    self._emit(Opcode.SETGLOBAL, [symbol.index])
                 case _:
                     return f"{statement} type not implemented."
 
@@ -145,6 +158,11 @@ class Compiler:
                 err = self._compile_boolean(literal)
                 if err:
                     return err
+            case IdentifierLiteral():
+                result, symbol = self.symbol_table.resolve(literal.token.token_value)
+                if not result:
+                    return f"Cannot resolve identifier {literal.token.token_value}"
+                self._emit(Opcode.GETGLOBAL, [symbol.index])
             case _:
                 return f"Literal {literal} not implemented"
 

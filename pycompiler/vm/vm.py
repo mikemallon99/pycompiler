@@ -5,6 +5,7 @@ from pycompiler.code import Instructions, Opcode, lookup_opcode
 from typing import Optional
 
 STACK_SIZE = 2048
+GLOBALS_SIZE = 65536
 
 Error = str
 
@@ -16,6 +17,8 @@ class VM:
         
         self.stack: List[Object] = [Object()] * STACK_SIZE
         self.sp: int = 0
+
+        self.globals: List[Object] = [Object()] * GLOBALS_SIZE
 
     def stack_top(self) -> Object:
         if self.sp == 0:
@@ -85,6 +88,16 @@ class VM:
 
                 if not self._is_truthy(self.pop()):
                     ip = pos - 1
+            elif op == Opcode.SETGLOBAL:
+                idx = int.from_bytes(self.instructions[ip+1:ip+3], byteorder='big')
+                ip += 2
+                self.globals[idx] = self.pop()
+            elif op == Opcode.GETGLOBAL:
+                idx = int.from_bytes(self.instructions[ip+1:ip+3], byteorder='big')
+                ip += 2
+                err = self.push(self.globals[idx])
+                if err:
+                    return err
             elif op == Opcode.POP:
                 self.pop()
             elif op == Opcode.NULL:

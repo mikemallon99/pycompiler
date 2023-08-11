@@ -219,3 +219,36 @@ def test_jumps():
         ]
     )
 
+def test_let():
+    run_compiler_test(
+        "let x = 2; let y = 3;",
+        [2, 3],
+        [
+            make(Opcode.CONSTANT, [0]),
+            make(Opcode.SETGLOBAL, [0]),
+            make(Opcode.CONSTANT, [1]),
+            make(Opcode.SETGLOBAL, [1]),
+        ]
+    )
+    run_compiler_test(
+        "let x = 2; x;",
+        [2],
+        [
+            make(Opcode.CONSTANT, [0]),
+            make(Opcode.SETGLOBAL, [0]),
+            make(Opcode.GETGLOBAL, [0]),
+            make(Opcode.POP, []),
+        ]
+    )
+    run_compiler_test(
+        "let x = 2; let y = x; y;",
+        [2],
+        [
+            make(Opcode.CONSTANT, [0]),
+            make(Opcode.SETGLOBAL, [0]),
+            make(Opcode.GETGLOBAL, [0]),
+            make(Opcode.SETGLOBAL, [1]),
+            make(Opcode.GETGLOBAL, [1]),
+            make(Opcode.POP, []),
+        ]
+    )

@@ -162,3 +162,25 @@ def test_prefix():
         NullObject()
     )
 
+def test_globals():
+    run_vm_test(
+        "let x = 2; x",
+        IntObject(2)
+    )
+    run_vm_test(
+        "let x = 2; let y = 3; y;",
+        IntObject(3)
+    )
+    run_vm_test(
+        "let x = 2; let y = x; y;",
+        IntObject(2)
+    )
+    run_vm_test(
+        "let x = 2; let y = 3; x + y",
+        IntObject(5)
+    )
+    run_vm_test(
+        "let x = 2; let y = x + x; x + y",
+        IntObject(6)
+    )
+
