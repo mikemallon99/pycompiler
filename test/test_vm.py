@@ -4,7 +4,7 @@ from typing import List, Any
 from pycompiler.compiler import Compiler
 from pycompiler.vm import VM
 from pycompiler.code import make, Opcode, Instructions, instructions_to_str
-from pycompiler.objects import Object, IntObject, BooleanObject, NullObject, StringObject, ArrayObject
+from pycompiler.objects import Object, IntObject, BooleanObject, NullObject, StringObject, ArrayObject, MapObject
 from pycompiler.parser import Parser
 from pycompiler.lexer import Lexer
 
@@ -202,5 +202,19 @@ def test_array():
     run_vm_test(
         "[1 + 2, 3 + 4]",
         ArrayObject([IntObject(3), IntObject(7)])
+    )
+    run_vm_test(
+        "[5, \"test\", 3 * 10]",
+        ArrayObject([IntObject(5), StringObject("test"), IntObject(30)])
+    )
+
+def test_map():
+    run_vm_test(
+        "{}",
+        MapObject({})
+    )
+    run_vm_test(
+        "{1 + 1: 1 + 2, 3 + 3: 3 + 4}",
+        MapObject({IntObject(2): IntObject(3), IntObject(6): IntObject(7)})
     )
 

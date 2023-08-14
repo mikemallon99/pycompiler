@@ -1,4 +1,4 @@
-from pycompiler.objects import Object, IntObject, BooleanObject, NullObject, StringObject, ArrayObject
+from pycompiler.objects import Object, IntObject, BooleanObject, NullObject, StringObject, ArrayObject, MapObject
 from pycompiler.compiler import Bytecode
 from pycompiler.code import Instructions, Opcode, lookup_opcode
 
@@ -108,6 +108,19 @@ class VM:
                     elems[i] = self.stack[self.sp - arr_size + i]
                 self.sp = self.sp - arr_size
                 err = self.push(ArrayObject(elems))
+                if err:
+                    return err
+            elif op == Opcode.MAP:
+                map_size = int.from_bytes(self.instructions[ip+1:ip+3], byteorder='big')
+                ip += 2
+                map: Dict[Object, Object] = {}
+                for i in range(0, map_size):
+                    key: Object = self.stack[self.sp - map_size * 2 + 2 * i]
+                    value: Object = self.stack[self.sp - map_size * 2 + 2 * i + 1]
+                    map[key] = value
+
+                self.sp = self.sp - map_size * 2
+                err = self.push(MapObject(map))
                 if err:
                     return err
             elif op == Opcode.NULL:

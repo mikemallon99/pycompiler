@@ -21,6 +21,7 @@ from pycompiler.parser import (
     BooleanLiteral,
     StringLiteral,
     ArrayLiteral,
+    MapLiteral,
     IdentifierLiteral,
 )
 
@@ -169,6 +170,10 @@ class Compiler:
                 err = self._compile_array(literal)
                 if err:
                     return err
+            case MapLiteral():
+                err = self._compile_map(literal)
+                if err:
+                    return err
             case IdentifierLiteral():
                 result, symbol = self.symbol_table.resolve(literal.token.token_value)
                 if not result:
@@ -197,6 +202,16 @@ class Compiler:
             if err:
                 return err
         self._emit(Opcode.ARRAY, [len(literal.members)])
+
+    def _compile_map(self, literal: MapLiteral):
+        for pair in literal.pairs:
+            err = self._compile_expression(pair[0])
+            if err:
+                return err
+            err = self._compile_expression(pair[1])
+            if err:
+                return err
+        self._emit(Opcode.MAP, [len(literal.pairs)])
 
     def _add_constant(self, constant: Object) -> int:
         self.constants.append(constant)

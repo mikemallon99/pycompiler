@@ -298,3 +298,33 @@ def test_array():
             make(Opcode.POP, []),
         ]
     )
+
+def test_map():
+    run_compiler_test(
+        "{}",
+        [],
+        [
+            make(Opcode.MAP, [0]),
+            make(Opcode.POP, []),
+        ]
+    )
+    run_compiler_test(
+        "{1 + 1: 1 + 2, 3 + 3: 3 + 4}",
+        [1, 1, 1, 2, 3, 3, 3, 4],
+        [
+            make(Opcode.CONSTANT, [0]),
+            make(Opcode.CONSTANT, [1]),
+            make(Opcode.ADD, []),
+            make(Opcode.CONSTANT, [2]),
+            make(Opcode.CONSTANT, [3]),
+            make(Opcode.ADD, []),
+            make(Opcode.CONSTANT, [4]),
+            make(Opcode.CONSTANT, [5]),
+            make(Opcode.ADD, []),
+            make(Opcode.CONSTANT, [6]),
+            make(Opcode.CONSTANT, [7]),
+            make(Opcode.ADD, []),
+            make(Opcode.MAP, [2]),
+            make(Opcode.POP, []),
+        ]
+    )

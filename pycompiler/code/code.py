@@ -21,6 +21,7 @@ class Opcode(Enum):
     GETGLOBAL = auto()
     SETGLOBAL = auto()
     ARRAY = auto()
+    MAP = auto()
     NULL = auto()
 
 
@@ -55,46 +56,35 @@ def lookup_opcode(op_bytes: bytes) -> Opcode:
 
 
 def read_operands(op: Opcode, operands: bytearray) -> Tuple[List[int], int]:
-    match op:
-        case Opcode.CONSTANT:
-            return [int.from_bytes(operands[0:2], byteorder='big')], 2
-        case Opcode.JUMPCOND:
-            return [int.from_bytes(operands[0:2], byteorder='big')], 2
-        case Opcode.JUMP:
-            return [int.from_bytes(operands[0:2], byteorder='big')], 2
-        case Opcode.GETGLOBAL:
-            return [int.from_bytes(operands[0:2], byteorder='big')], 2
-        case Opcode.SETGLOBAL:
-            return [int.from_bytes(operands[0:2], byteorder='big')], 2
-        case Opcode.ARRAY:
-            return [int.from_bytes(operands[0:2], byteorder='big')], 2
-        case _:
-            return [], 0
+    if (
+            op == Opcode.CONSTANT or
+            op == Opcode.JUMPCOND or
+            op == Opcode.JUMP or
+            op == Opcode.GETGLOBAL or
+            op == Opcode.SETGLOBAL or
+            op == Opcode.ARRAY or
+            op == Opcode.MAP
+            ):
+        return [int.from_bytes(operands[0:2], byteorder='big')], 2
+    else:
+        return [], 0
 
 
 def make(op: Opcode, operands: List[int]=[]) -> Instructions:
     instruction: bytearray = bytearray(1)
     instruction[0] = op.value
 
-    match op:
-        case Opcode.CONSTANT:
-            instruction += bytearray(2)
-            instruction[1:] = operands[0].to_bytes(2, byteorder='big')
-        case Opcode.JUMPCOND:
-            instruction += bytearray(2)
-            instruction[1:] = operands[0].to_bytes(2, byteorder='big')
-        case Opcode.JUMP:
-            instruction += bytearray(2)
-            instruction[1:] = operands[0].to_bytes(2, byteorder='big')
-        case Opcode.GETGLOBAL:
-            instruction += bytearray(2)
-            instruction[1:] = operands[0].to_bytes(2, byteorder='big')
-        case Opcode.SETGLOBAL:
-            instruction += bytearray(2)
-            instruction[1:] = operands[0].to_bytes(2, byteorder='big')
-        case Opcode.ARRAY:
-            instruction += bytearray(2)
-            instruction[1:] = operands[0].to_bytes(2, byteorder='big')
+    if (
+            op == Opcode.CONSTANT or
+            op == Opcode.JUMPCOND or
+            op == Opcode.JUMP or
+            op == Opcode.GETGLOBAL or
+            op == Opcode.SETGLOBAL or
+            op == Opcode.ARRAY or
+            op == Opcode.MAP
+            ):
+        instruction += bytearray(2)
+        instruction[1:] = operands[0].to_bytes(2, byteorder='big')
 
     return instruction
 

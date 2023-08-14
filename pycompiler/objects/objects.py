@@ -25,6 +25,9 @@ class IntObject(Object):
     def __repr__(self):
         return f"<IntObject: value={self.value}>"
 
+    def __hash__(self):
+        return hash(self.value)
+
 class StringObject(Object):
     def __init__(self, value: str):
         self.value: str = value
@@ -37,6 +40,9 @@ class StringObject(Object):
     def __repr__(self):
         return f"<StringObject: value={self.value}>"
 
+    def __hash__(self):
+        return hash(self.value)
+
 class ArrayObject(Object):
     def __init__(self, value: List[Object]):
         self.value: List[Object] = value
@@ -48,6 +54,9 @@ class ArrayObject(Object):
 
     def __repr__(self):
         return f"<ArrayObject: value={self.value}>"
+
+    def __hash__(self):
+        return hash(self.value)
 
 class MapObject(Object):
     def __init__(self, value: Dict[Object, Object]):
