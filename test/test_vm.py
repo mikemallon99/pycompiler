@@ -218,3 +218,29 @@ def test_map():
         MapObject({IntObject(2): IntObject(3), IntObject(6): IntObject(7)})
     )
 
+def test_index():
+    run_vm_test(
+        "[1, 2, 3][1 + 1]",
+        IntObject(3)
+    )
+    run_vm_test(
+        "{1 + 1: 1 + 2, 3 + 3: 3 + 4}[6]",
+        IntObject(7)
+    )
+    run_vm_test(
+        "[1, 2, 3][3]",
+        NullObject()
+    )
+    run_vm_test(
+        "[1, 2, 3][-1]",
+        NullObject()
+    )
+    run_vm_test(
+        "{1 + 1: 1 + 2, 3 + 3: 3 + 4}[1]",
+        NullObject()
+    )
+    run_vm_test(
+        "{1 + 1: 1 + 2, 3 + 3: 3 + 4}[\"yo\"]",
+        NullObject()
+    )
+

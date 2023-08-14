@@ -122,6 +122,8 @@ class Compiler:
                         self._emit(Opcode.NOTEQUAL, [])
                     case TokenType.GT:
                         self._emit(Opcode.GREATERTHAN, [])
+                    case TokenType.LBRACKET:
+                        self._emit(Opcode.INDEX, [])
                     case _:
                         return f"Infix for {expression.operator.token_type} not implemented."
             case IfExpression():

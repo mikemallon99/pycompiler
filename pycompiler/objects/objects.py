@@ -47,6 +47,11 @@ class ArrayObject(Object):
     def __init__(self, value: List[Object]):
         self.value: List[Object] = value
 
+    def get(self, index: IntObject) -> Object:
+        if index.value < 0 or index.value > (len(self.value) - 1):
+            return NullObject()
+        return self.value[index.value]
+
     def __eq__(self, other: Object):
         if not isinstance(other, ArrayObject):
             return NotImplemented
@@ -61,6 +66,12 @@ class ArrayObject(Object):
 class MapObject(Object):
     def __init__(self, value: Dict[Object, Object]):
         self.value: Dict[Object, Object] = value
+
+    def get(self, key: Object) -> Object:
+        value = self.value.get(key)
+        if not value:
+            return NullObject()
+        return self.value[key]
 
     def __eq__(self, other: Object):
         if not isinstance(other, MapObject):

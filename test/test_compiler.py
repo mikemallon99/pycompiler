@@ -328,3 +328,20 @@ def test_map():
             make(Opcode.POP, []),
         ]
     )
+
+def test_index():
+    run_compiler_test(
+        "[1, 2, 3][1 + 1]",
+        [1, 2, 3, 1, 1],
+        [
+            make(Opcode.CONSTANT, [0]),
+            make(Opcode.CONSTANT, [1]),
+            make(Opcode.CONSTANT, [2]),
+            make(Opcode.ARRAY, [3]),
+            make(Opcode.CONSTANT, [3]),
+            make(Opcode.CONSTANT, [4]),
+            make(Opcode.ADD, []),
+            make(Opcode.INDEX, []),
+            make(Opcode.POP, []),
+        ]
+    )

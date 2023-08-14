@@ -22,6 +22,7 @@ class Opcode(Enum):
     SETGLOBAL = auto()
     ARRAY = auto()
     MAP = auto()
+    INDEX = auto()
     NULL = auto()
 
 

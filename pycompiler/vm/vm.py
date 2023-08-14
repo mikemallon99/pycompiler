@@ -123,6 +123,20 @@ class VM:
                 err = self.push(MapObject(map))
                 if err:
                     return err
+            elif op == Opcode.INDEX:
+                right = self.pop()
+                left = self.pop()
+                if isinstance(left, ArrayObject) and isinstance(right, IntObject):
+                    err = self.push(left.get(right))
+                    if err:
+                        return err
+                elif isinstance(left, MapObject):
+                    err = self.push(left.get(right))
+                    if err:
+                        return err
+                else:
+                    return "Index operator not implemented for input types"
+
             elif op == Opcode.NULL:
                 err = self.push(NullObject())
                 if err:
