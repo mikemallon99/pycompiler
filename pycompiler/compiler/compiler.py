@@ -2,7 +2,8 @@ from typing import List, Tuple
 from pycompiler.lexer import TokenType
 from pycompiler.objects import (
     Object,
-    IntObject
+    IntObject,
+    StringObject
 )
 from pycompiler.code import Instructions, Opcode, make
 from pycompiler.parser import (
@@ -18,6 +19,8 @@ from pycompiler.parser import (
     Literal,
     IntLiteral,
     BooleanLiteral,
+    StringLiteral,
+    ArrayLiteral,
     IdentifierLiteral,
 )
 
@@ -158,6 +161,14 @@ class Compiler:
                 err = self._compile_boolean(literal)
                 if err:
                     return err
+            case StringLiteral():
+                err = self._compile_string(literal)
+                if err:
+                    return err
+            case ArrayLiteral():
+                err = self._compile_array(literal)
+                if err:
+                    return err
             case IdentifierLiteral():
                 result, symbol = self.symbol_table.resolve(literal.token.token_value)
                 if not result:
@@ -175,6 +186,17 @@ class Compiler:
             self._emit(Opcode.TRUE, [])
         else:
             self._emit(Opcode.FALSE, [])
+
+    def _compile_string(self, literal: StringLiteral):
+        string_obj: StringObject = StringObject(literal.value)
+        self._emit(Opcode.CONSTANT, [self._add_constant(string_obj)])
+
+    def _compile_array(self, literal: ArrayLiteral):
+        for member in literal.members:
+            err = self._compile_expression(member)
+            if err:
+                return err
+        self._emit(Opcode.ARRAY, [len(literal.members)])
 
     def _add_constant(self, constant: Object) -> int:
         self.constants.append(constant)

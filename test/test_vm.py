@@ -4,7 +4,7 @@ from typing import List, Any
 from pycompiler.compiler import Compiler
 from pycompiler.vm import VM
 from pycompiler.code import make, Opcode, Instructions, instructions_to_str
-from pycompiler.objects import Object, IntObject, BooleanObject, NullObject
+from pycompiler.objects import Object, IntObject, BooleanObject, NullObject, StringObject, ArrayObject
 from pycompiler.parser import Parser
 from pycompiler.lexer import Lexer
 
@@ -182,5 +182,25 @@ def test_globals():
     run_vm_test(
         "let x = 2; let y = x + x; x + y",
         IntObject(6)
+    )
+
+def test_string():
+    run_vm_test(
+        "\"test\"",
+        StringObject("test")
+    )
+    run_vm_test(
+        "\"one\" + \"two\"",
+        StringObject("onetwo")
+    )
+
+def test_array():
+    run_vm_test(
+        "[]",
+        ArrayObject([])
+    )
+    run_vm_test(
+        "[1 + 2, 3 + 4]",
+        ArrayObject([IntObject(3), IntObject(7)])
     )
 

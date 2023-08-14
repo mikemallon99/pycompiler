@@ -20,6 +20,7 @@ class Opcode(Enum):
     JUMP = auto()
     GETGLOBAL = auto()
     SETGLOBAL = auto()
+    ARRAY = auto()
     NULL = auto()
 
 
@@ -65,6 +66,8 @@ def read_operands(op: Opcode, operands: bytearray) -> Tuple[List[int], int]:
             return [int.from_bytes(operands[0:2], byteorder='big')], 2
         case Opcode.SETGLOBAL:
             return [int.from_bytes(operands[0:2], byteorder='big')], 2
+        case Opcode.ARRAY:
+            return [int.from_bytes(operands[0:2], byteorder='big')], 2
         case _:
             return [], 0
 
@@ -87,6 +90,9 @@ def make(op: Opcode, operands: List[int]=[]) -> Instructions:
             instruction += bytearray(2)
             instruction[1:] = operands[0].to_bytes(2, byteorder='big')
         case Opcode.SETGLOBAL:
+            instruction += bytearray(2)
+            instruction[1:] = operands[0].to_bytes(2, byteorder='big')
+        case Opcode.ARRAY:
             instruction += bytearray(2)
             instruction[1:] = operands[0].to_bytes(2, byteorder='big')
 

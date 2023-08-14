@@ -1,4 +1,4 @@
-from pycompiler.objects import Object, IntObject, BooleanObject, NullObject
+from pycompiler.objects import Object, IntObject, BooleanObject, NullObject, StringObject, ArrayObject
 from pycompiler.compiler import Bytecode
 from pycompiler.code import Instructions, Opcode, lookup_opcode
 
@@ -100,6 +100,16 @@ class VM:
                     return err
             elif op == Opcode.POP:
                 self.pop()
+            elif op == Opcode.ARRAY:
+                arr_size = int.from_bytes(self.instructions[ip+1:ip+3], byteorder='big')
+                ip += 2
+                elems: List[Object] = [Object()] * arr_size
+                for i in range(0, arr_size):
+                    elems[i] = self.stack[self.sp - arr_size + i]
+                self.sp = self.sp - arr_size
+                err = self.push(ArrayObject(elems))
+                if err:
+                    return err
             elif op == Opcode.NULL:
                 err = self.push(NullObject())
                 if err:
@@ -126,8 +136,18 @@ class VM:
                     out_val = left_val / right_val
                 case _:
                     return f"IntObject arithmetic not found for {op}"
-
             err = self.push(IntObject(out_val))
+            if err:
+                return err
+        elif isinstance(left, StringObject) and isinstance(right, StringObject):
+            right_val: str = right.value
+            left_val: str = left.value
+            match op:
+                case Opcode.ADD:
+                    out_val = left_val + right_val
+                case _:
+                    return f"IntObject arithmetic not found for {op}"
+            err = self.push(StringObject(out_val))
             if err:
                 return err
         else:

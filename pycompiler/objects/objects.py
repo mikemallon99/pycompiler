@@ -1,3 +1,4 @@
+from typing import Dict, List
 from pycompiler.parser import FunctionLiteral
 
 class Object:
@@ -35,6 +36,30 @@ class StringObject(Object):
 
     def __repr__(self):
         return f"<StringObject: value={self.value}>"
+
+class ArrayObject(Object):
+    def __init__(self, value: List[Object]):
+        self.value: List[Object] = value
+
+    def __eq__(self, other: Object):
+        if not isinstance(other, ArrayObject):
+            return NotImplemented
+        return self.value == other.value
+
+    def __repr__(self):
+        return f"<ArrayObject: value={self.value}>"
+
+class MapObject(Object):
+    def __init__(self, value: Dict[Object, Object]):
+        self.value: Dict[Object, Object] = value
+
+    def __eq__(self, other: Object):
+        if not isinstance(other, MapObject):
+            return NotImplemented
+        return self.value == other.value
+
+    def __repr__(self):
+        return f"<MapObject: value={self.value}>"
 
 class FunctionObject(Object):
     def __init__(self, value: bool):

@@ -3,7 +3,7 @@ from typing import List, Any
 
 from pycompiler.compiler import Compiler
 from pycompiler.code import make, Opcode, Instructions, instructions_to_str
-from pycompiler.objects import Object, IntObject
+from pycompiler.objects import Object, IntObject, StringObject
 from pycompiler.parser import Parser
 from pycompiler.lexer import Lexer
 
@@ -32,6 +32,8 @@ def run_compiler_test(
         match type(exp_const):
             case builtins.int:
                 const_objects.append(IntObject(exp_const))
+            case builtins.str:
+                const_objects.append(StringObject(exp_const))
             case _:
                 raise Exception(f"Cannot convert type to object: {type(exp_const)}")
 
@@ -249,6 +251,50 @@ def test_let():
             make(Opcode.GETGLOBAL, [0]),
             make(Opcode.SETGLOBAL, [1]),
             make(Opcode.GETGLOBAL, [1]),
+            make(Opcode.POP, []),
+        ]
+    )
+
+def test_string():
+    run_compiler_test(
+        "\"monkey\"",
+        ["monkey"],
+        [
+            make(Opcode.CONSTANT, [0]),
+            make(Opcode.POP, []),
+        ]
+    )
+    run_compiler_test(
+        "\"mon\" + \"key\"",
+        ["mon", "key"],
+        [
+            make(Opcode.CONSTANT, [0]),
+            make(Opcode.CONSTANT, [1]),
+            make(Opcode.ADD, []),
+            make(Opcode.POP, []),
+        ]
+    )
+
+def test_array():
+    run_compiler_test(
+        "[]",
+        [],
+        [
+            make(Opcode.ARRAY, [0]),
+            make(Opcode.POP, []),
+        ]
+    )
+    run_compiler_test(
+        "[1 + 2, 3 + 4]",
+        [1, 2, 3, 4],
+        [
+            make(Opcode.CONSTANT, [0]),
+            make(Opcode.CONSTANT, [1]),
+            make(Opcode.ADD, []),
+            make(Opcode.CONSTANT, [2]),
+            make(Opcode.CONSTANT, [3]),
+            make(Opcode.ADD, []),
+            make(Opcode.ARRAY, [2]),
             make(Opcode.POP, []),
         ]
     )
