@@ -1,4 +1,12 @@
-from pycompiler.objects import Object, IntObject, BooleanObject, NullObject, StringObject, ArrayObject, MapObject
+from pycompiler.objects import (
+    Object,
+    IntObject,
+    BooleanObject,
+    NullObject,
+    StringObject,
+    ArrayObject,
+    MapObject,
+)
 from pycompiler.compiler import Bytecode
 from pycompiler.code import Instructions, Opcode, lookup_opcode
 
@@ -14,7 +22,7 @@ class VM:
     def __init__(self, bytecode: Bytecode):
         self.instructions: Instructions = bytecode[0]
         self.constants: List[Object] = bytecode[1]
-        
+
         self.stack: List[Object] = [Object()] * STACK_SIZE
         self.sp: int = 0
 
@@ -41,20 +49,29 @@ class VM:
         return self.stack[self.sp]
 
     def run(self) -> Optional[Error]:
-        ip = 0 
+        ip = 0
         while ip < len(self.instructions):
             op = Opcode(self.instructions[ip])
             if op == Opcode.CONSTANT:
-                index = int.from_bytes(self.instructions[ip+1:ip+3], byteorder='big')
+                index = int.from_bytes(
+                    self.instructions[ip + 1 : ip + 3], byteorder="big"
+                )
                 ip += 2
                 err = self.push(self.constants[index])
                 if err:
                     return err
-            elif op == Opcode.ADD or op == Opcode.SUB or op == Opcode.MUL or op == Opcode.DIV:
+            elif (
+                op == Opcode.ADD
+                or op == Opcode.SUB
+                or op == Opcode.MUL
+                or op == Opcode.DIV
+            ):
                 err = self._execute_binary_op(op)
                 if err:
                     return err
-            elif op == Opcode.EQUAL or op == Opcode.NOTEQUAL or op == Opcode.GREATERTHAN:
+            elif (
+                op == Opcode.EQUAL or op == Opcode.NOTEQUAL or op == Opcode.GREATERTHAN
+            ):
                 err = self._execute_comparison(op)
                 if err:
                     return err
@@ -80,20 +97,28 @@ class VM:
                 if err:
                     return err
             elif op == Opcode.JUMP:
-                pos = int.from_bytes(self.instructions[ip+1:ip+3], byteorder='big')
+                pos = int.from_bytes(
+                    self.instructions[ip + 1 : ip + 3], byteorder="big"
+                )
                 ip = pos - 1
             elif op == Opcode.JUMPCOND:
-                pos = int.from_bytes(self.instructions[ip+1:ip+3], byteorder='big')
+                pos = int.from_bytes(
+                    self.instructions[ip + 1 : ip + 3], byteorder="big"
+                )
                 ip += 2
 
                 if not self._is_truthy(self.pop()):
                     ip = pos - 1
             elif op == Opcode.SETGLOBAL:
-                idx = int.from_bytes(self.instructions[ip+1:ip+3], byteorder='big')
+                idx = int.from_bytes(
+                    self.instructions[ip + 1 : ip + 3], byteorder="big"
+                )
                 ip += 2
                 self.globals[idx] = self.pop()
             elif op == Opcode.GETGLOBAL:
-                idx = int.from_bytes(self.instructions[ip+1:ip+3], byteorder='big')
+                idx = int.from_bytes(
+                    self.instructions[ip + 1 : ip + 3], byteorder="big"
+                )
                 ip += 2
                 err = self.push(self.globals[idx])
                 if err:
@@ -101,7 +126,9 @@ class VM:
             elif op == Opcode.POP:
                 self.pop()
             elif op == Opcode.ARRAY:
-                arr_size = int.from_bytes(self.instructions[ip+1:ip+3], byteorder='big')
+                arr_size = int.from_bytes(
+                    self.instructions[ip + 1 : ip + 3], byteorder="big"
+                )
                 ip += 2
                 elems: List[Object] = [Object()] * arr_size
                 for i in range(0, arr_size):
@@ -111,7 +138,9 @@ class VM:
                 if err:
                     return err
             elif op == Opcode.MAP:
-                map_size = int.from_bytes(self.instructions[ip+1:ip+3], byteorder='big')
+                map_size = int.from_bytes(
+                    self.instructions[ip + 1 : ip + 3], byteorder="big"
+                )
                 ip += 2
                 map: Dict[Object, Object] = {}
                 for i in range(0, map_size):

@@ -28,6 +28,7 @@ class Opcode(Enum):
 
 Instructions = bytearray
 
+
 def instructions_to_str(instructions: Instructions) -> str:
     out_string: str = ""
 
@@ -37,7 +38,7 @@ def instructions_to_str(instructions: Instructions) -> str:
         out_string += "{:04X}".format(i)
         out_string += f" {op.name}"
 
-        operands, read = read_operands(op, instructions[i+1:])
+        operands, read = read_operands(op, instructions[i + 1 :])
         for operand in operands:
             out_string += f" {operand}"
 
@@ -58,35 +59,33 @@ def lookup_opcode(op_bytes: bytes) -> Opcode:
 
 def read_operands(op: Opcode, operands: bytearray) -> Tuple[List[int], int]:
     if (
-            op == Opcode.CONSTANT or
-            op == Opcode.JUMPCOND or
-            op == Opcode.JUMP or
-            op == Opcode.GETGLOBAL or
-            op == Opcode.SETGLOBAL or
-            op == Opcode.ARRAY or
-            op == Opcode.MAP
-            ):
-        return [int.from_bytes(operands[0:2], byteorder='big')], 2
+        op == Opcode.CONSTANT
+        or op == Opcode.JUMPCOND
+        or op == Opcode.JUMP
+        or op == Opcode.GETGLOBAL
+        or op == Opcode.SETGLOBAL
+        or op == Opcode.ARRAY
+        or op == Opcode.MAP
+    ):
+        return [int.from_bytes(operands[0:2], byteorder="big")], 2
     else:
         return [], 0
 
 
-def make(op: Opcode, operands: List[int]=[]) -> Instructions:
+def make(op: Opcode, operands: List[int] = []) -> Instructions:
     instruction: bytearray = bytearray(1)
     instruction[0] = op.value
 
     if (
-            op == Opcode.CONSTANT or
-            op == Opcode.JUMPCOND or
-            op == Opcode.JUMP or
-            op == Opcode.GETGLOBAL or
-            op == Opcode.SETGLOBAL or
-            op == Opcode.ARRAY or
-            op == Opcode.MAP
-            ):
+        op == Opcode.CONSTANT
+        or op == Opcode.JUMPCOND
+        or op == Opcode.JUMP
+        or op == Opcode.GETGLOBAL
+        or op == Opcode.SETGLOBAL
+        or op == Opcode.ARRAY
+        or op == Opcode.MAP
+    ):
         instruction += bytearray(2)
-        instruction[1:] = operands[0].to_bytes(2, byteorder='big')
+        instruction[1:] = operands[0].to_bytes(2, byteorder="big")
 
     return instruction
-
-

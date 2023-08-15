@@ -1,14 +1,24 @@
-from pycompiler.code import Opcode, Instructions, make, instructions_to_str, read_operands, lookup_opcode
+from pycompiler.code import (
+    Opcode,
+    Instructions,
+    make,
+    instructions_to_str,
+    read_operands,
+    lookup_opcode,
+)
+
 
 def test_make_constant():
     instruction: Instructions = make(Opcode.CONSTANT, [65534])
     assert instruction[0] == Opcode.CONSTANT.value
-    assert instruction[1:] == (65534).to_bytes(2, byteorder='big')
+    assert instruction[1:] == (65534).to_bytes(2, byteorder="big")
+
 
 def test_make_add():
     instruction: Instructions = make(Opcode.ADD, [])
     assert instruction[0] == Opcode.ADD.value
     assert instruction[1:] == bytearray()
+
 
 def test_instr_strings():
     instructions: List[Instructions] = [
@@ -17,17 +27,14 @@ def test_instr_strings():
         make(Opcode.CONSTANT, [65535]),
     ]
 
-    expected = (
-        "0000 ADD\n"
-        "0001 CONSTANT 2\n"
-        "0004 CONSTANT 65535\n"
-    )
+    expected = "0000 ADD\n" "0001 CONSTANT 2\n" "0004 CONSTANT 65535\n"
 
     concatted: Instructions = bytearray()
     for ins in instructions:
         concatted += ins
 
     assert instructions_to_str(concatted) == expected
+
 
 # For decoding an instruction
 def test_read_operands():

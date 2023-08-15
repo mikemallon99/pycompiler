@@ -7,25 +7,28 @@ from pycompiler.objects import Object, IntObject, StringObject
 from pycompiler.parser import Parser
 from pycompiler.lexer import Lexer
 
+
 def pytest_assertrepr_compare(op, left, right):
     if isinstance(left, bytearray) and isinstance(right, bytearray) and op == "==":
         return [
             "Instructions differ:",
-            "   vals: {} != {}".format(instructions_to_str(left), instructions_to_str(right)),
+            "   vals: {} != {}".format(
+                instructions_to_str(left), instructions_to_str(right)
+            ),
         ]
+
 
 def compare_insts(left, right):
     assert instructions_to_str(left) == instructions_to_str(right)
 
+
 def run_compiler_test(
-            test_prog: str, 
-            exp_consts: List[Any], 
-            exp_insts: List[Instructions]
-        ):
+    test_prog: str, exp_consts: List[Any], exp_insts: List[Instructions]
+):
     concat_insts = bytearray()
     for ins in exp_insts:
         concat_insts += ins
-    
+
     # Convert const values to objects
     const_objects: List[Objects] = []
     for exp_const in exp_consts:
@@ -44,6 +47,7 @@ def run_compiler_test(
     compare_insts(compiler.instructions, concat_insts)
     assert compiler.constants == const_objects
 
+
 def test_integer_arithmetic():
     run_compiler_test(
         "1 + 2",
@@ -53,7 +57,7 @@ def test_integer_arithmetic():
             make(Opcode.CONSTANT, [1]),
             make(Opcode.ADD, []),
             make(Opcode.POP, []),
-        ]
+        ],
     )
 
     run_compiler_test(
@@ -64,7 +68,7 @@ def test_integer_arithmetic():
             make(Opcode.CONSTANT, [1]),
             make(Opcode.SUB, []),
             make(Opcode.POP, []),
-        ]
+        ],
     )
 
     run_compiler_test(
@@ -75,7 +79,7 @@ def test_integer_arithmetic():
             make(Opcode.CONSTANT, [1]),
             make(Opcode.MUL, []),
             make(Opcode.POP, []),
-        ]
+        ],
     )
 
     run_compiler_test(
@@ -86,8 +90,9 @@ def test_integer_arithmetic():
             make(Opcode.CONSTANT, [1]),
             make(Opcode.DIV, []),
             make(Opcode.POP, []),
-        ]
+        ],
     )
+
 
 def test_boolean():
     run_compiler_test(
@@ -96,7 +101,7 @@ def test_boolean():
         [
             make(Opcode.TRUE, []),
             make(Opcode.POP, []),
-        ]
+        ],
     )
 
     run_compiler_test(
@@ -105,8 +110,9 @@ def test_boolean():
         [
             make(Opcode.FALSE, []),
             make(Opcode.POP, []),
-        ]
+        ],
     )
+
 
 def test_comparisons():
     run_compiler_test(
@@ -117,7 +123,7 @@ def test_comparisons():
             make(Opcode.CONSTANT, [1]),
             make(Opcode.EQUAL, []),
             make(Opcode.POP, []),
-        ]
+        ],
     )
 
     run_compiler_test(
@@ -128,7 +134,7 @@ def test_comparisons():
             make(Opcode.CONSTANT, [1]),
             make(Opcode.NOTEQUAL, []),
             make(Opcode.POP, []),
-        ]
+        ],
     )
 
     run_compiler_test(
@@ -139,7 +145,7 @@ def test_comparisons():
             make(Opcode.CONSTANT, [1]),
             make(Opcode.GREATERTHAN, []),
             make(Opcode.POP, []),
-        ]
+        ],
     )
 
     run_compiler_test(
@@ -150,8 +156,9 @@ def test_comparisons():
             make(Opcode.CONSTANT, [1]),
             make(Opcode.GREATERTHAN, []),
             make(Opcode.POP, []),
-        ]
+        ],
     )
+
 
 def test_prefixes():
     run_compiler_test(
@@ -161,7 +168,7 @@ def test_prefixes():
             make(Opcode.CONSTANT, [0]),
             make(Opcode.MINUS, []),
             make(Opcode.POP, []),
-        ]
+        ],
     )
 
     run_compiler_test(
@@ -171,8 +178,9 @@ def test_prefixes():
             make(Opcode.TRUE, []),
             make(Opcode.BANG, []),
             make(Opcode.POP, []),
-        ]
+        ],
     )
+
 
 def test_jumps():
     run_compiler_test(
@@ -195,7 +203,7 @@ def test_jumps():
             make(Opcode.CONSTANT, [1]),
             # 0015
             make(Opcode.POP, []),
-        ]
+        ],
     )
 
     run_compiler_test(
@@ -218,8 +226,9 @@ def test_jumps():
             make(Opcode.CONSTANT, [2]),
             # 0017
             make(Opcode.POP, []),
-        ]
+        ],
     )
+
 
 def test_let():
     run_compiler_test(
@@ -230,7 +239,7 @@ def test_let():
             make(Opcode.SETGLOBAL, [0]),
             make(Opcode.CONSTANT, [1]),
             make(Opcode.SETGLOBAL, [1]),
-        ]
+        ],
     )
     run_compiler_test(
         "let x = 2; x;",
@@ -240,7 +249,7 @@ def test_let():
             make(Opcode.SETGLOBAL, [0]),
             make(Opcode.GETGLOBAL, [0]),
             make(Opcode.POP, []),
-        ]
+        ],
     )
     run_compiler_test(
         "let x = 2; let y = x; y;",
@@ -252,28 +261,30 @@ def test_let():
             make(Opcode.SETGLOBAL, [1]),
             make(Opcode.GETGLOBAL, [1]),
             make(Opcode.POP, []),
-        ]
+        ],
     )
+
 
 def test_string():
     run_compiler_test(
-        "\"monkey\"",
+        '"monkey"',
         ["monkey"],
         [
             make(Opcode.CONSTANT, [0]),
             make(Opcode.POP, []),
-        ]
+        ],
     )
     run_compiler_test(
-        "\"mon\" + \"key\"",
+        '"mon" + "key"',
         ["mon", "key"],
         [
             make(Opcode.CONSTANT, [0]),
             make(Opcode.CONSTANT, [1]),
             make(Opcode.ADD, []),
             make(Opcode.POP, []),
-        ]
+        ],
     )
+
 
 def test_array():
     run_compiler_test(
@@ -282,7 +293,7 @@ def test_array():
         [
             make(Opcode.ARRAY, [0]),
             make(Opcode.POP, []),
-        ]
+        ],
     )
     run_compiler_test(
         "[1 + 2, 3 + 4]",
@@ -296,8 +307,9 @@ def test_array():
             make(Opcode.ADD, []),
             make(Opcode.ARRAY, [2]),
             make(Opcode.POP, []),
-        ]
+        ],
     )
+
 
 def test_map():
     run_compiler_test(
@@ -306,7 +318,7 @@ def test_map():
         [
             make(Opcode.MAP, [0]),
             make(Opcode.POP, []),
-        ]
+        ],
     )
     run_compiler_test(
         "{1 + 1: 1 + 2, 3 + 3: 3 + 4}",
@@ -326,8 +338,9 @@ def test_map():
             make(Opcode.ADD, []),
             make(Opcode.MAP, [2]),
             make(Opcode.POP, []),
-        ]
+        ],
     )
+
 
 def test_index():
     run_compiler_test(
@@ -343,5 +356,5 @@ def test_index():
             make(Opcode.ADD, []),
             make(Opcode.INDEX, []),
             make(Opcode.POP, []),
-        ]
+        ],
     )

@@ -17,27 +17,27 @@ class Precedence(IntEnum):
 def get_precedence(token: Token) -> Precedence:
     match token.token_type:
         case TokenType.EQ:
-            return Precedence.EQUALS;
+            return Precedence.EQUALS
         case TokenType.NOT_EQ:
-            return Precedence.EQUALS;
+            return Precedence.EQUALS
         case TokenType.LT:
-            return Precedence.LESSGREATER;
+            return Precedence.LESSGREATER
         case TokenType.GT:
-            return Precedence.LESSGREATER;
+            return Precedence.LESSGREATER
         case TokenType.PLUS:
-            return Precedence.SUM;
+            return Precedence.SUM
         case TokenType.MINUS:
-            return Precedence.SUM;
+            return Precedence.SUM
         case TokenType.SLASH:
-            return Precedence.PRODUCT;
+            return Precedence.PRODUCT
         case TokenType.ASTERISK:
-            return Precedence.PRODUCT;
+            return Precedence.PRODUCT
         case TokenType.LPAREN:
-            return Precedence.CALL;
+            return Precedence.CALL
         case TokenType.LBRACKET:
-            return Precedence.INDEX;
+            return Precedence.INDEX
         case _:
-            return Precedence.LOWEST;
+            return Precedence.LOWEST
 
 
 class Statement:
@@ -189,6 +189,8 @@ class ArrayLiteral(Literal):
 
 
 ExpressionPair = Tuple[Expression, Expression]
+
+
 class MapLiteral(Literal):
     def __init__(self, pairs: List[ExpressionPair]):
         self.pairs: List[ExpressionPair] = pairs
@@ -238,14 +240,23 @@ class InfixExpression(Expression):
     def __eq__(self, other: Expression):
         if not isinstance(other, InfixExpression):
             return NotImplemented
-        return self.left == other.left and self.operator == other.operator and self.right == other.right
+        return (
+            self.left == other.left
+            and self.operator == other.operator
+            and self.right == other.right
+        )
 
     def __repr__(self):
         return f"<InfixExpression: left={self.left}, operator={self.operator}, right={self.right}>"
 
 
 class IfExpression(Expression):
-    def __init__(self, condition: Expression, consequence: BlockStatement, alternative: Optional[BlockStatement] = None):
+    def __init__(
+        self,
+        condition: Expression,
+        consequence: BlockStatement,
+        alternative: Optional[BlockStatement] = None,
+    ):
         self.condition: Expression = condition
         self.consequence: BlockStatement = consequence
         self.alternative: Optional[BlockStatement] = alternative
@@ -254,9 +265,9 @@ class IfExpression(Expression):
         if not isinstance(other, IfExpression):
             return NotImplemented
         return (
-            self.condition == other.condition and 
-            self.consequence == other.consequence and 
-            self.alternative == other.alternative
+            self.condition == other.condition
+            and self.consequence == other.consequence
+            and self.alternative == other.alternative
         )
 
     def __repr__(self):
@@ -336,14 +347,14 @@ class Parser:
 
     def _parse_expression(self, precedence: Precedence) -> Expression:
         if self.cur_token.token_type in [
-            TokenType.IDENT, 
-            TokenType.INT, 
-            TokenType.TRUE, 
-            TokenType.FALSE, 
-            TokenType.STRING, 
+            TokenType.IDENT,
+            TokenType.INT,
+            TokenType.TRUE,
+            TokenType.FALSE,
+            TokenType.STRING,
             TokenType.FUNCTION,
             TokenType.LBRACKET,
-            TokenType.LBRACE
+            TokenType.LBRACE,
         ]:
             left_expr = self._parse_literal()
         elif self.cur_token.token_type in [TokenType.MINUS, TokenType.BANG]:
@@ -353,9 +364,14 @@ class Parser:
         elif self.cur_token.token_type == TokenType.IF:
             left_expr = self._parse_if()
         else:
-            raise Exception(f"Did not find expression function for token type {self.cur_token.token_type.value}")
+            raise Exception(
+                f"Did not find expression function for token type {self.cur_token.token_type.value}"
+            )
 
-        while self.peek_token.token_type != TokenType.SEMICOLON and precedence < get_precedence(self.peek_token):
+        while (
+            self.peek_token.token_type != TokenType.SEMICOLON
+            and precedence < get_precedence(self.peek_token)
+        ):
             cur_token: Token = self._next_token()
             if cur_token.token_type == TokenType.LPAREN:
                 left_expr = self._parse_call(left_expr)
@@ -383,8 +399,10 @@ class Parser:
             case TokenType.LBRACE:
                 literal = self._parse_map()
             case _:
-                raise Exception(f"Cannot create literal expression from token type: {self.cur_token.token_type.value}")
-        
+                raise Exception(
+                    f"Cannot create literal expression from token type: {self.cur_token.token_type.value}"
+                )
+
         return LiteralExpression(literal)
 
     def _parse_prefix(self) -> PrefixExpression:
@@ -502,19 +520,22 @@ class Parser:
                 self._next_token()
 
         return CallExpression(function, arguments)
-        
 
     def _parse_infix(self, left: Expression):
         operator: Token = self.cur_token
         self._next_token()
         # Parse expression in brackets for arrays
         if operator.token_type == TokenType.LBRACKET:
-            expression = InfixExpression(left, operator, self._parse_expression(Precedence.LOWEST))
+            expression = InfixExpression(
+                left, operator, self._parse_expression(Precedence.LOWEST)
+            )
             self._expect_peek(TokenType.RBRACKET)
             return expression
         # Regular infix expression
         else:
-            return InfixExpression(left, operator, self._parse_expression(get_precedence(operator)))
+            return InfixExpression(
+                left, operator, self._parse_expression(get_precedence(operator))
+            )
 
     def _next_token(self) -> Token:
         self.cur_token = self.peek_token
@@ -527,4 +548,3 @@ class Parser:
             return self.cur_token
         else:
             raise UnexpectedTokenError(self.peek_token.token_type, expect_type)
-

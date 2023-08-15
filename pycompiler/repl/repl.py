@@ -11,6 +11,7 @@ def new_compiler_with_state(old_compiler: Compiler) -> Compiler:
     new_compiler.symbol_table = old_compiler.symbol_table
     return new_compiler
 
+
 def new_vm_with_state(old_vm: VM, bytecode) -> VM:
     new_vm = VM(bytecode)
     new_vm.globals = old_vm.globals
@@ -43,4 +44,3 @@ def run():
             continue
 
         print(vm.last_popped())
-    

@@ -13,7 +13,11 @@ class Symbol:
     def __eq__(self, other: Any):
         if not isinstance(other, Symbol):
             return NotImplemented
-        return self.name == other.name and self.scope == other.scope and self.index == other.index
+        return (
+            self.name == other.name
+            and self.scope == other.scope
+            and self.index == other.index
+        )
 
     def __repr__(self):
         return f"<Symbol: name={self.name}, scope={self.scope}, index={self.index}>"

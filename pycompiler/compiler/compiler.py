@@ -1,13 +1,9 @@
 from typing import List, Tuple
 from pycompiler.lexer import TokenType
-from pycompiler.objects import (
-    Object,
-    IntObject,
-    StringObject
-)
+from pycompiler.objects import Object, IntObject, StringObject
 from pycompiler.code import Instructions, Opcode, make
 from pycompiler.parser import (
-    Statement, 
+    Statement,
     LetStatement,
     ReturnStatement,
     ExpressionStatement,
@@ -30,10 +26,12 @@ from .symbols import SymbolTable, Symbol
 Bytecode = Tuple[Instructions, List[Object]]
 Error = str
 
+
 class EmittedInstruction:
     def __init__(self, opcode: Opcode, pos: int):
         self.opcode = opcode
         self.pos = pos
+
 
 class Compiler:
     def __init__(self):
@@ -218,13 +216,13 @@ class Compiler:
     def _add_constant(self, constant: Object) -> int:
         self.constants.append(constant)
         return len(self.constants) - 1
-        
+
     def _add_instruction(self, instruction: Instructions) -> int:
         pos: int = len(self.instructions)
         self.instructions += instruction
         return pos
 
-    def _emit(self, op: Opcode, operands: List[int]=[]) -> int:
+    def _emit(self, op: Opcode, operands: List[int] = []) -> int:
         ins: Instructions = make(op, operands)
         pos: int = self._add_instruction(ins)
         self.prev_ins = self.last_ins
@@ -235,13 +233,12 @@ class Compiler:
         return self.last_ins.opcode == Opcode.POP
 
     def _remove_last_ins(self) -> None:
-        self.instructions = self.instructions[:self.last_ins.pos]
+        self.instructions = self.instructions[: self.last_ins.pos]
         self.last_ins = self.prev_ins
 
     def _replace_ins(self, pos: int, new_ins: Instructions) -> None:
-        self.instructions[pos:pos+len(new_ins)] = new_ins
+        self.instructions[pos : pos + len(new_ins)] = new_ins
 
     def _change_operand(self, op_pos: int, operands: List[int]) -> None:
         new_ins = make(Opcode(self.instructions[op_pos]), operands)
         self._replace_ins(op_pos, new_ins)
-

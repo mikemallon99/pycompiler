@@ -1,6 +1,7 @@
 from enum import Enum
 from typing import Optional
 
+
 class TokenType(Enum):
     # Extras
     EOF = "EOF"
@@ -27,7 +28,7 @@ class TokenType(Enum):
     COMMA = ","
     COLON = ":"
     SEMICOLON = ";"
-    DB_QUOTE = "\""
+    DB_QUOTE = '"'
 
     LPAREN = "("
     RPAREN = ")"
@@ -55,7 +56,10 @@ class Token:
             self.token_value: str = token_type.value
 
     def __eq__(self, other):
-        return self.token_type == other.token_type and self.token_value == other.token_value
+        return (
+            self.token_type == other.token_type
+            and self.token_value == other.token_value
+        )
 
     def __repr__(self):
         return f"<Token: token_type={self.token_type}, token_value={self.token_value}>"
@@ -69,14 +73,14 @@ class Lexer:
         # position of the next byte read
         self.read_position: int = 0
 
-        self.cur_byte: char = ''
+        self.cur_byte: char = ""
 
         # Load up the first token into cur_byte
         self._read_char()
 
     def next_token(self) -> Token:
         self._skip_whitespace()
-        
+
         token: Optional[Token] = None
 
         # More complex tokens
@@ -100,10 +104,16 @@ class Lexer:
                     break
 
             # Two char tokens
-            if self.cur_byte == TokenType.ASSIGN.value and self._peek_char() == TokenType.ASSIGN.value:
+            if (
+                self.cur_byte == TokenType.ASSIGN.value
+                and self._peek_char() == TokenType.ASSIGN.value
+            ):
                 self._read_char()
                 token = Token(TokenType.EQ)
-            elif self.cur_byte == TokenType.BANG.value and self._peek_char() == TokenType.ASSIGN.value:
+            elif (
+                self.cur_byte == TokenType.BANG.value
+                and self._peek_char() == TokenType.ASSIGN.value
+            ):
                 self._read_char()
                 token = Token(TokenType.NOT_EQ)
 
@@ -155,13 +165,15 @@ class Lexer:
         return string
 
     def _is_letter(self, value):
-        return ((value >= 'a' and value <= 'z') or (value >= 'A' and value <= 'Z') or value == '_') and value != TokenType.EOF.value
+        return (
+            (value >= "a" and value <= "z")
+            or (value >= "A" and value <= "Z")
+            or value == "_"
+        ) and value != TokenType.EOF.value
 
     def _is_number(self, value):
-        return (value >= '0' and value <= '9') and value != TokenType.EOF.value
+        return (value >= "0" and value <= "9") and value != TokenType.EOF.value
 
     def _skip_whitespace(self):
-        while self.cur_byte in [' ', '\t', '\n', '\r']:
+        while self.cur_byte in [" ", "\t", "\n", "\r"]:
             self._read_char()
-
-

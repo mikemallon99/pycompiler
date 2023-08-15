@@ -1,8 +1,10 @@
 from typing import Dict, List
 from pycompiler.parser import FunctionLiteral
 
+
 class Object:
     pass
+
 
 class NullObject:
     def __eq__(self, other: Object):
@@ -12,6 +14,7 @@ class NullObject:
 
     def __repr__(self):
         return f"<NullObject>"
+
 
 class IntObject(Object):
     def __init__(self, value: int):
@@ -28,6 +31,7 @@ class IntObject(Object):
     def __hash__(self):
         return hash(self.value)
 
+
 class StringObject(Object):
     def __init__(self, value: str):
         self.value: str = value
@@ -42,6 +46,7 @@ class StringObject(Object):
 
     def __hash__(self):
         return hash(self.value)
+
 
 class ArrayObject(Object):
     def __init__(self, value: List[Object]):
@@ -63,6 +68,7 @@ class ArrayObject(Object):
     def __hash__(self):
         return hash(self.value)
 
+
 class MapObject(Object):
     def __init__(self, value: Dict[Object, Object]):
         self.value: Dict[Object, Object] = value
@@ -81,6 +87,7 @@ class MapObject(Object):
     def __repr__(self):
         return f"<MapObject: value={self.value}>"
 
+
 class FunctionObject(Object):
     def __init__(self, value: bool):
         self.value: FunctionLiteral = value
@@ -94,6 +101,7 @@ class FunctionObject(Object):
     def __repr__(self):
         return f"<FunctionObject: value={self.value}>"
 
+
 class BooleanObject(Object):
     def __init__(self, value: bool):
         self.value: bool = value
@@ -106,6 +114,7 @@ class BooleanObject(Object):
     def __repr__(self):
         return f"<BooleanObject: value={self.value}>"
 
+
 class ReturnObject(Object):
     def __init__(self, value: Object):
         self.value = value
@@ -117,4 +126,3 @@ class ReturnObject(Object):
 
     def __repr__(self):
         return f"<ReturnObject: value={self.value}>"
-

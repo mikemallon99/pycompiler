@@ -9,6 +9,7 @@ def test_define():
     y = table.define("y")
     assert y == Symbol("y", GLOBALSCOPE, 1)
 
+
 def test_resolve():
     table = SymbolTable()
     x = table.define("x")

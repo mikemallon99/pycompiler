@@ -1,11 +1,11 @@
 from pycompiler.lexer import Lexer, Token, TokenType
 from pycompiler.parser import (
-    Parser, 
+    Parser,
     Statement,
-    IdentifierLiteral, 
-    IntLiteral, 
-    StringLiteral, 
-    FunctionLiteral, 
+    IdentifierLiteral,
+    IntLiteral,
+    StringLiteral,
+    FunctionLiteral,
     BooleanLiteral,
     ArrayLiteral,
     ExpressionPair,
@@ -29,109 +29,92 @@ def assert_parser_output(test_program: str, expected_ast: List[Statement]):
     program = Parser(Lexer(test_program)).parse()
     assert program == expected_ast
 
+
 def test_identifier_literal():
     assert_parser_output(
-        "test_identifier", 
+        "test_identifier",
         [
             ExpressionStatement(
                 LiteralExpression(
-                    IdentifierLiteral(
-                        Token(TokenType.IDENT, "test_identifier")
-                    )
+                    IdentifierLiteral(Token(TokenType.IDENT, "test_identifier"))
                 )
             )
-        ]
+        ],
     )
+
 
 def test_int_literal():
     assert_parser_output(
-        "69", 
+        "69",
         [
             ExpressionStatement(
-                LiteralExpression(
-                    IntLiteral(
-                        Token(TokenType.INT, "69"),
-                        69
-                    )
-                )
+                LiteralExpression(IntLiteral(Token(TokenType.INT, "69"), 69))
             )
-        ]
+        ],
     )
+
 
 def test_string_literal():
     assert_parser_output(
-        "\"test string\"", 
+        '"test string"',
         [
             ExpressionStatement(
                 LiteralExpression(
-                    StringLiteral(
-                        Token(TokenType.STRING, "test string"),
-                        "test string"
-                    )
+                    StringLiteral(Token(TokenType.STRING, "test string"), "test string")
                 )
             )
-        ]
+        ],
     )
+
 
 def test_function_literal():
     assert_parser_output(
-        "fn (x, y) { return x }", 
+        "fn (x, y) { return x }",
         [
             ExpressionStatement(
                 LiteralExpression(
                     FunctionLiteral(
-                        [
-                            Token(TokenType.IDENT, "x"),
-                            Token(TokenType.IDENT, "y")
-                        ],
+                        [Token(TokenType.IDENT, "x"), Token(TokenType.IDENT, "y")],
                         BlockStatement(
                             [
                                 ReturnStatement(
                                     LiteralExpression(
-                                        IdentifierLiteral(
-                                            Token(TokenType.IDENT, "x")
-                                        )
+                                        IdentifierLiteral(Token(TokenType.IDENT, "x"))
                                     )
                                 ),
                             ]
-                        )
+                        ),
                     )
                 )
             )
-        ]
+        ],
     )
+
 
 def test_boolean_literal():
     assert_parser_output(
-        "true", 
+        "true",
         [
             ExpressionStatement(
-                LiteralExpression(
-                    BooleanLiteral(
-                        Token(TokenType.TRUE, "true"),
-                        True
-                    )
-                )
+                LiteralExpression(BooleanLiteral(Token(TokenType.TRUE, "true"), True))
             )
-        ]
+        ],
     )
     assert_parser_output(
-        "false", 
+        "false",
         [
             ExpressionStatement(
                 LiteralExpression(
-                    BooleanLiteral(
-                        Token(TokenType.FALSE, "false"),
-                        False
-                    )
+                    BooleanLiteral(Token(TokenType.FALSE, "false"), False)
                 )
             )
-        ]
+        ],
     )
+
 
 def test_array_literal():
     assert_parser_output(
-        "[1, 2, 3]", 
+        "[1, 2, 3]",
         [
             ExpressionStatement(
                 LiteralExpression(
@@ -139,29 +122,38 @@ def test_array_literal():
                         [
                             LiteralExpression(IntLiteral(Token(TokenType.INT, "1"), 1)),
                             LiteralExpression(IntLiteral(Token(TokenType.INT, "2"), 2)),
-                            LiteralExpression(IntLiteral(Token(TokenType.INT, "3"), 3))
+                            LiteralExpression(IntLiteral(Token(TokenType.INT, "3"), 3)),
                         ]
                     )
                 )
             )
-        ]
+        ],
     )
+
 
 def test_map_literal():
     assert_parser_output(
-        "{\"one\": 1, 2: 2, function(): \"three\"}", 
+        '{"one": 1, 2: 2, function(): "three"}',
         [
             ExpressionStatement(
                 LiteralExpression(
                     MapLiteral(
                         [
                             (
-                                LiteralExpression(StringLiteral(Token(TokenType.STRING, "one"), "one")),
-                                LiteralExpression(IntLiteral(Token(TokenType.INT, "1"), 1))
+                                LiteralExpression(
+                                    StringLiteral(Token(TokenType.STRING, "one"), "one")
+                                ),
+                                LiteralExpression(
+                                    IntLiteral(Token(TokenType.INT, "1"), 1)
+                                ),
                             ),
                             (
-                                LiteralExpression(IntLiteral(Token(TokenType.INT, "2"), 2)),
-                                LiteralExpression(IntLiteral(Token(TokenType.INT, "2"), 2))
+                                LiteralExpression(
+                                    IntLiteral(Token(TokenType.INT, "2"), 2)
+                                ),
+                                LiteralExpression(
+                                    IntLiteral(Token(TokenType.INT, "2"), 2)
+                                ),
                             ),
                             (
                                 CallExpression(
@@ -170,72 +162,62 @@ def test_map_literal():
                                             Token(TokenType.IDENT, "function"),
                                         )
                                     ),
-                                    []
+                                    [],
                                 ),
-                                LiteralExpression(StringLiteral(Token(TokenType.STRING, "three"), "three"))
+                                LiteralExpression(
+                                    StringLiteral(
+                                        Token(TokenType.STRING, "three"), "three"
+                                    )
+                                ),
                             ),
                         ]
                     )
                 )
             )
-        ]
+        ],
     )
+
 
 def test_let_statement():
     assert_parser_output(
-        "let x = 21", 
+        "let x = 21",
         [
             LetStatement(
                 Token(TokenType.IDENT, "x"),
-                LiteralExpression(
-                    IntLiteral(
-                        Token(TokenType.INT, "21"),
-                        21
-                    )
-                )
+                LiteralExpression(IntLiteral(Token(TokenType.INT, "21"), 21)),
             )
-        ]
+        ],
     )
+
 
 def test_return_statement():
     assert_parser_output(
-        "return 21", 
+        "return 21",
         [
             ReturnStatement(
-                LiteralExpression(
-                    IntLiteral(
-                        Token(TokenType.INT, "21"),
-                        21
-                    )
-                )
+                LiteralExpression(IntLiteral(Token(TokenType.INT, "21"), 21))
             )
-        ]
+        ],
     )
+
 
 def test_infix_expression():
     assert_parser_output(
-        "12 * test", 
+        "12 * test",
         [
             ExpressionStatement(
                 InfixExpression(
-                    LiteralExpression(
-                        IntLiteral(
-                            Token(TokenType.INT, "12"),
-                            12
-                        )
-                    ),
+                    LiteralExpression(IntLiteral(Token(TokenType.INT, "12"), 12)),
                     Token(TokenType.ASTERISK),
                     LiteralExpression(
-                        IdentifierLiteral(
-                            Token(TokenType.IDENT, "test")
-                        )
-                    )
+                        IdentifierLiteral(Token(TokenType.IDENT, "test"))
+                    ),
                 )
             )
-        ]
+        ],
     )
     assert_parser_output(
-        "test[0]", 
+        "test[0]",
         [
             ExpressionStatement(
                 InfixExpression(
@@ -245,95 +227,97 @@ def test_infix_expression():
                         )
                     ),
                     Token(TokenType.LBRACKET),
-                    LiteralExpression(
-                        IntLiteral(
-                            Token(TokenType.INT, "0"),
-                            0
-                        )
-                    )
+                    LiteralExpression(IntLiteral(Token(TokenType.INT, "0"), 0)),
                 )
             )
-        ]
+        ],
     )
+
 
 def test_prefix_expression():
     assert_parser_output(
-        "-12", 
+        "-12",
         [
             ExpressionStatement(
                 PrefixExpression(
                     Token(TokenType.MINUS),
-                    LiteralExpression(
-                        IntLiteral(
-                            Token(TokenType.INT, "12"),
-                            12
-                        )
-                    )
+                    LiteralExpression(IntLiteral(Token(TokenType.INT, "12"), 12)),
                 )
             )
-        ]
+        ],
     )
     assert_parser_output(
-        "!12", 
+        "!12",
         [
             ExpressionStatement(
                 PrefixExpression(
                     Token(TokenType.BANG),
-                    LiteralExpression(
-                        IntLiteral(
-                            Token(TokenType.INT, "12"),
-                            12
-                        )
-                    )
+                    LiteralExpression(IntLiteral(Token(TokenType.INT, "12"), 12)),
                 )
             )
-        ]
+        ],
     )
+
 
 def test_if_expression():
     assert_parser_output(
-        "if (true) { return x } else { return false }", 
+        "if (true) { return x } else { return false }",
         [
             ExpressionStatement(
                 IfExpression(
                     LiteralExpression(
-                        BooleanLiteral(
-                            Token(TokenType.TRUE, "true"),
-                            True
-                        )
+                        BooleanLiteral(Token(TokenType.TRUE, "true"), True)
                     ),
                     BlockStatement(
-                        [ReturnStatement(LiteralExpression(IdentifierLiteral(Token(TokenType.IDENT, "x"))))]
+                        [
+                            ReturnStatement(
+                                LiteralExpression(
+                                    IdentifierLiteral(Token(TokenType.IDENT, "x"))
+                                )
+                            )
+                        ]
                     ),
                     BlockStatement(
-                        [ReturnStatement(LiteralExpression(BooleanLiteral(Token(TokenType.FALSE, "false"), False)))]
+                        [
+                            ReturnStatement(
+                                LiteralExpression(
+                                    BooleanLiteral(
+                                        Token(TokenType.FALSE, "false"), False
+                                    )
+                                )
+                            )
+                        ]
                     ),
                 )
             )
-        ]
+        ],
     )
     assert_parser_output(
-        "if (true) { return x }", 
+        "if (true) { return x }",
         [
             ExpressionStatement(
                 IfExpression(
                     LiteralExpression(
-                        BooleanLiteral(
-                            Token(TokenType.TRUE, "true"),
-                            True
-                        )
+                        BooleanLiteral(Token(TokenType.TRUE, "true"), True)
                     ),
                     BlockStatement(
-                        [ReturnStatement(LiteralExpression(IdentifierLiteral(Token(TokenType.IDENT, "x"))))]
+                        [
+                            ReturnStatement(
+                                LiteralExpression(
+                                    IdentifierLiteral(Token(TokenType.IDENT, "x"))
+                                )
+                            )
+                        ]
                     ),
                 )
             )
-        ]
+        ],
     )
+
 
 def test_call_expression():
     assert_parser_output(
-        "function(2, true)", 
+        "function(2, true)",
         [
             ExpressionStatement(
                 CallExpression(
@@ -343,82 +327,50 @@ def test_call_expression():
                         )
                     ),
                     [
+                        LiteralExpression(IntLiteral(Token(TokenType.INT, "2"), 2)),
                         LiteralExpression(
-                            IntLiteral(
-                                Token(TokenType.INT, "2"),
-                                2
-                            )
+                            BooleanLiteral(Token(TokenType.TRUE, "true"), True)
                         ),
-                        LiteralExpression(
-                            BooleanLiteral(
-                                Token(TokenType.TRUE, "true"),
-                                True
-                            )
-                        ),
-                    ]
+                    ],
                 )
             )
-        ]
+        ],
     )
+
 
 def test_multiple_statements():
     assert_parser_output(
-        "let x = 69; 2 * 2; return x;", 
+        "let x = 69; 2 * 2; return x;",
         [
             LetStatement(
                 Token(TokenType.IDENT, "x"),
-                LiteralExpression(
-                    IntLiteral(
-                        Token(TokenType.INT, "69"),
-                        69
-                    )
-                )
+                LiteralExpression(IntLiteral(Token(TokenType.INT, "69"), 69)),
             ),
             ExpressionStatement(
                 InfixExpression(
-                    LiteralExpression(
-                        IntLiteral(
-                            Token(TokenType.INT, "2"),
-                            2
-                        )
-                    ),
+                    LiteralExpression(IntLiteral(Token(TokenType.INT, "2"), 2)),
                     Token(TokenType.ASTERISK),
-                    LiteralExpression(
-                        IntLiteral(
-                            Token(TokenType.INT, "2"),
-                            2
-                        )
-                    ),
+                    LiteralExpression(IntLiteral(Token(TokenType.INT, "2"), 2)),
                 )
             ),
             ReturnStatement(
-                LiteralExpression(
-                    IdentifierLiteral(
-                        Token(TokenType.IDENT, "x")
-                    )
-                )
+                LiteralExpression(IdentifierLiteral(Token(TokenType.IDENT, "x")))
             ),
-        ]
+        ],
     )
+
 
 def test_precedence():
     assert_parser_output(
-        "12 + x * ( y - 3 )", 
+        "12 + x * ( y - 3 )",
         [
             ExpressionStatement(
                 InfixExpression(
-                    LiteralExpression(
-                        IntLiteral(
-                            Token(TokenType.INT, "12"),
-                            12
-                        )
-                    ),
+                    LiteralExpression(IntLiteral(Token(TokenType.INT, "12"), 12)),
                     Token(TokenType.PLUS),
                     InfixExpression(
                         LiteralExpression(
-                            IdentifierLiteral(
-                                Token(TokenType.IDENT, "x")
-                            )
+                            IdentifierLiteral(Token(TokenType.IDENT, "x"))
                         ),
                         Token(TokenType.ASTERISK),
                         InfixExpression(
@@ -428,15 +380,10 @@ def test_precedence():
                                 )
                             ),
                             Token(TokenType.MINUS),
-                            LiteralExpression(
-                                IntLiteral(
-                                    Token(TokenType.INT, "3"),
-                                    3
-                                )
-                            ),
-                        )
-                    )
+                            LiteralExpression(IntLiteral(Token(TokenType.INT, "3"), 3)),
+                        ),
+                    ),
                 )
             )
-        ]
+        ],
     )
