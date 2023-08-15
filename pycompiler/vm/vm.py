@@ -235,8 +235,6 @@ class VM:
                 return err
         elif isinstance(left, NullObject) and isinstance(right, NullObject):
             err = self.push(BooleanObject(True))
-        elif isinstance(left, Object) or isinstance(right, Object):
-            return f"Object comparison cannot be done for generic Object type"
         else:
             match op:
                 case Opcode.EQUAL:
@@ -254,8 +252,6 @@ class VM:
 
     def _is_truthy(self, obj: Object) -> bool:
         if isinstance(obj, NullObject):
-            return False
-        elif isinstance(obj, Object):
             return False
         else:
             return bool(obj.value)
