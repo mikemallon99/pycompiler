@@ -1,6 +1,6 @@
 from typing import List, Tuple
 from pycompiler.lexer import TokenType
-from pycompiler.objects import Object, IntObject, StringObject
+from pycompiler.objects import Object, IntObject, StringObject, CompiledFunctionObject
 from pycompiler.code import Instructions, Opcode, make
 from pycompiler.parser import (
     Statement,
@@ -14,6 +14,7 @@ from pycompiler.parser import (
     IfExpression,
     Literal,
     IntLiteral,
+    FunctionLiteral,
     BooleanLiteral,
     StringLiteral,
     ArrayLiteral,
@@ -21,7 +22,8 @@ from pycompiler.parser import (
     IdentifierLiteral,
 )
 
-from .symbols import SymbolTable, Symbol
+from .symbols import SymbolTable
+
 
 Bytecode = Tuple[Instructions, List[Object]]
 Error = str
@@ -33,15 +35,21 @@ class EmittedInstruction:
         self.pos = pos
 
 
-class Compiler:
-    def __init__(self):
+class CompilerScope():
+    def __init__(self) -> None:
         self.instructions: Instructions = Instructions()
-        self.constants: List[Object] = []
-
         self.last_ins = EmittedInstruction(Opcode.NULL, 9999)
         self.prev_ins = EmittedInstruction(Opcode.NULL, 9999)
 
+
+class Compiler:
+    def __init__(self) -> None:
+        self.constants: List[Object] = []
+
         self.symbol_table: SymbolTable = SymbolTable()
+
+        self.scopes: List[CompilerScope] = [CompilerScope()]
+        self.scope_index: int = 0
 
     def compile(self, ast: List[Statement]) -> Error | None:
         for statement in ast:
@@ -60,13 +68,18 @@ class Compiler:
                     # Assign result of expression to identifier
                     symbol = self.symbol_table.define(statement.ident.token_value)
                     self._emit(Opcode.SETGLOBAL, [symbol.index])
+                case ReturnStatement():
+                    err = self._compile_expression(statement.expr)
+                    if err:
+                        return err
+                    self._emit(Opcode.RETURNVALUE, [])
                 case _:
                     return f"{statement} type not implemented."
 
         return None
 
     def bytecode(self) -> Bytecode:
-        return self.instructions, self.constants
+        return self._current_instructions(), self.constants
 
     def _compile_expression(self, expression: Expression) -> Error | None:
         match expression:
@@ -135,7 +148,7 @@ class Compiler:
                 if self._last_ins_is_pop():
                     self._remove_last_ins()
                 jump_op_pos: int = self._emit(Opcode.JUMP, [9999])
-                after_cons_pos = len(self.instructions)
+                after_cons_pos = len(self._current_instructions())
                 self._change_operand(jumpcond_op_pos, [after_cons_pos])
 
                 if expression.alternative:
@@ -146,7 +159,7 @@ class Compiler:
                         self._remove_last_ins()
                 else:
                     self._emit(Opcode.NULL, [])
-                after_alt_pos = len(self.instructions)
+                after_alt_pos = len(self._current_instructions())
                 self._change_operand(jump_op_pos, [after_alt_pos])
 
             case _:
@@ -181,6 +194,13 @@ class Compiler:
                 if not result or not symbol:
                     return f"Cannot resolve identifier {literal.token.token_value}"
                 self._emit(Opcode.GETGLOBAL, [symbol.index])
+            case FunctionLiteral():
+                self._enter_scope()
+                err = self.compile(literal.body.statements)
+                if err:
+                    return err
+                instructions = self._leave_scope()
+                self._emit(Opcode.CONSTANT, [self._add_constant(CompiledFunctionObject(instructions))])
             case _:
                 return f"Literal {literal} not implemented"
 
@@ -220,27 +240,42 @@ class Compiler:
         return len(self.constants) - 1
 
     def _add_instruction(self, instruction: Instructions) -> int:
-        pos: int = len(self.instructions)
-        self.instructions += instruction
+        pos: int = len(self._current_instructions())
+        self._current_scope().instructions += instruction
         return pos
 
     def _emit(self, op: Opcode, operands: List[int] = []) -> int:
         ins: Instructions = make(op, operands)
         pos: int = self._add_instruction(ins)
-        self.prev_ins = self.last_ins
-        self.last_ins = EmittedInstruction(op, pos)
+        self._current_scope().prev_ins = self._current_scope().last_ins
+        self._current_scope().last_ins = EmittedInstruction(op, pos)
         return pos
 
+    def _enter_scope(self):
+        self.scope_index += 1
+        self.scopes.append(CompilerScope())
+
+    def _leave_scope(self) -> Instructions:
+        self.scope_index -= 1
+        scope = self.scopes.pop()
+        return scope.instructions
+
+    def _current_scope(self) -> CompilerScope:
+        return self.scopes[self.scope_index]
+
+    def _current_instructions(self) -> Instructions:
+        return self._current_scope().instructions
+
     def _last_ins_is_pop(self) -> bool:
-        return self.last_ins.opcode == Opcode.POP
+        return self._current_scope().last_ins.opcode == Opcode.POP
 
     def _remove_last_ins(self) -> None:
-        self.instructions = self.instructions[: self.last_ins.pos]
-        self.last_ins = self.prev_ins
+        self._current_scope().instructions = self._current_instructions()[: self._current_scope().last_ins.pos]
+        self.last_ins = self._current_scope().prev_ins
 
     def _replace_ins(self, pos: int, new_ins: Instructions) -> None:
-        self.instructions[pos : pos + len(new_ins)] = new_ins
+        self._current_scope().instructions[pos : pos + len(new_ins)] = new_ins
 
     def _change_operand(self, op_pos: int, operands: List[int]) -> None:
-        new_ins = make(Opcode(self.instructions[op_pos]), operands)
+        new_ins = make(Opcode(self._current_instructions()[op_pos]), operands)
         self._replace_ins(op_pos, new_ins)

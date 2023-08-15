@@ -23,6 +23,9 @@ class Opcode(Enum):
     ARRAY = auto()
     MAP = auto()
     INDEX = auto()
+    CALL = auto()
+    RETURNVALUE = auto()
+    RETURN = auto()
     NULL = auto()
 
 

@@ -1,5 +1,7 @@
-from typing import Dict, List
+from typing import Dict, List, Tuple
 from pycompiler.parser import FunctionLiteral
+from pycompiler.code import Instructions
+
 
 
 class Object:
@@ -100,6 +102,19 @@ class FunctionObject(Object):
 
     def __repr__(self):
         return f"<FunctionObject: value={self.value}>"
+
+
+class CompiledFunctionObject(Object):
+    def __init__(self, value: Instructions):
+        self.value: Instructions = value
+
+    def __eq__(self, other: object):
+        if not isinstance(other, CompiledFunctionObject):
+            return NotImplemented
+        return self.value == other.value
+
+    def __repr__(self):
+        return f"<CompiledFunctionObject: value={self.value}>"
 
 
 class BooleanObject(Object):

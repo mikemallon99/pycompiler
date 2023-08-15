@@ -3,7 +3,7 @@ from typing import List, Any
 
 from pycompiler.compiler import Compiler
 from pycompiler.code import make, Opcode, Instructions, instructions_to_str
-from pycompiler.objects import Object, IntObject, StringObject
+from pycompiler.objects import Object, IntObject, StringObject, CompiledFunctionObject, NullObject
 from pycompiler.parser import Parser, Statement
 from pycompiler.lexer import Lexer
 
@@ -22,30 +22,47 @@ def compare_insts(left, right):
     assert instructions_to_str(left) == instructions_to_str(right)
 
 
-def run_compiler_test(
-    test_prog: str, exp_consts: List[Any], exp_insts: List[Instructions]
-):
-    concat_insts = bytearray()
-    for ins in exp_insts:
-        concat_insts += ins
+def compare_consts(left_consts, right_consts):
+    for left_const, right_const in zip(left_consts, right_consts):
+        if isinstance(left_const, CompiledFunctionObject) and isinstance(right_const, CompiledFunctionObject):
+            compare_insts(left_const.value, right_const.value)
+        elif isinstance(left_const, NullObject) and isinstance(right_const, NullObject):
+            assert True
+        else:
+            assert left_const.value == right_const.value
 
+
+def concat_insts(insts: List[Instructions]) -> Instructions:
+    output = bytearray()
+    for ins in insts:
+        output += ins
+    return output
+
+
+def run_compiler_test(
+    test_prog: str, exp_consts: List[Any], exp_insts_list: List[Instructions]
+):
     # Convert const values to objects
     const_objects: List[Object] = []
     for exp_const in exp_consts:
-        match type(exp_const):
-            case builtins.int:
-                const_objects.append(IntObject(exp_const))
-            case builtins.str:
-                const_objects.append(StringObject(exp_const))
-            case _:
-                raise Exception(f"Cannot convert type to object: {type(exp_const)}")
+        if isinstance(exp_const, Instructions):
+            const_objects.append(CompiledFunctionObject(exp_const))
+        elif isinstance(exp_const, builtins.int):
+            const_objects.append(IntObject(exp_const))
+        elif isinstance(exp_const, builtins.str):
+            const_objects.append(StringObject(exp_const))
+        else:
+            raise Exception(f"Cannot convert type to object: {type(exp_const)}")
 
     ast: List[Statement] = Parser(Lexer(test_prog)).parse()
     compiler = Compiler()
     compiler.compile(ast)
 
-    compare_insts(compiler.instructions, concat_insts)
-    assert compiler.constants == const_objects
+    exp_insts_code = concat_insts(exp_insts_list)
+
+    instructions, constants = compiler.bytecode()
+    compare_insts(instructions, exp_insts_code)
+    compare_consts(constants, const_objects)
 
 
 def test_integer_arithmetic():
@@ -358,3 +375,47 @@ def test_index():
             make(Opcode.POP, []),
         ],
     )
+
+
+def test_functions():
+    run_compiler_test(
+        "fn() { return 5 + 10 }",
+        [
+            5,
+            10,
+            concat_insts(
+                [
+                    make(Opcode.CONSTANT, [0]),
+                    make(Opcode.CONSTANT, [1]),
+                    make(Opcode.ADD, []),
+                    make(Opcode.RETURNVALUE, []),
+                ]
+            ),
+        ],
+        [
+            make(Opcode.CONSTANT, [2]),
+            make(Opcode.POP, []),
+        ],
+    )
+
+
+def test_scopes():
+    compiler = Compiler()
+    assert compiler.scope_index == 0
+
+    compiler._emit(Opcode.MUL, [])
+
+    compiler._enter_scope()
+    assert compiler.scope_index == 1
+
+    compiler._emit(Opcode.SUB, [])
+    assert len(compiler.scopes[compiler.scope_index].instructions) == 1
+
+    compiler._leave_scope()
+    assert compiler.scope_index == 0
+
+    compiler._emit(Opcode.ADD, [])
+    assert len(compiler.scopes[compiler.scope_index].instructions) == 2
+
+    assert compiler.scopes[compiler.scope_index].last_ins.opcode == Opcode.ADD
+    assert compiler.scopes[compiler.scope_index].prev_ins.opcode == Opcode.MUL

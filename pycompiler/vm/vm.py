@@ -10,7 +10,7 @@ from pycompiler.objects import (
 from pycompiler.compiler import Bytecode
 from pycompiler.code import Instructions, Opcode
 
-from typing import Optional, List, Dict
+from typing import List, Dict
 
 STACK_SIZE = 2048
 GLOBALS_SIZE = 65536
