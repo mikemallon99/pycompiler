@@ -6,6 +6,7 @@ from pycompiler.objects import (
     StringObject,
     ArrayObject,
     MapObject,
+    CompiledFunctionObject,
 )
 from pycompiler.compiler import Bytecode
 from pycompiler.code import Instructions, Opcode
@@ -18,10 +19,21 @@ GLOBALS_SIZE = 65536
 Error = str
 
 
+class Frame:
+    def __init__(self, fn) -> None:
+        self.ip: int = -1
+        self.fn: CompiledFunctionObject = fn
+
+    def get_instructions(self) -> Instructions:
+        return self.fn.value
+
+
 class VM:
     def __init__(self, bytecode: Bytecode):
-        self.instructions: Instructions = bytecode[0]
         self.constants: List[Object] = bytecode[1]
+
+        self.frames: List[Frame] = [Frame(CompiledFunctionObject(bytecode[0]))]
+        self.frame_index: int = 0
 
         self.stack: List[Object] = [Object()] * STACK_SIZE
         self.sp: int = 0
@@ -49,13 +61,20 @@ class VM:
         return self.stack[self.sp]
 
     def run(self) -> Error | None:
-        ip = 0
+        ip: int
+        ins: Instructions
+        op: Opcode
         operand: Object
-        while ip < len(self.instructions):
-            op = Opcode(self.instructions[ip])
+
+        while self._current_frame().ip < len(self._current_frame().get_instructions()) - 1:
+            self._current_frame().ip += 1
+            ip = self._current_frame().ip
+            ins = self._current_frame().get_instructions()
+            op = Opcode(ins[ip])
+
             if op == Opcode.CONSTANT:
                 index = int.from_bytes(
-                    self.instructions[ip + 1 : ip + 3], byteorder="big"
+                    ins[ip + 1 : ip + 3], byteorder="big"
                 )
                 ip += 2
                 err = self.push(self.constants[index])
@@ -99,12 +118,12 @@ class VM:
                     return err
             elif op == Opcode.JUMP:
                 pos = int.from_bytes(
-                    self.instructions[ip + 1 : ip + 3], byteorder="big"
+                    ins[ip + 1 : ip + 3], byteorder="big"
                 )
                 ip = pos - 1
             elif op == Opcode.JUMPCOND:
                 pos = int.from_bytes(
-                    self.instructions[ip + 1 : ip + 3], byteorder="big"
+                    ins[ip + 1 : ip + 3], byteorder="big"
                 )
                 ip += 2
 
@@ -112,13 +131,13 @@ class VM:
                     ip = pos - 1
             elif op == Opcode.SETGLOBAL:
                 idx = int.from_bytes(
-                    self.instructions[ip + 1 : ip + 3], byteorder="big"
+                    ins[ip + 1 : ip + 3], byteorder="big"
                 )
                 ip += 2
                 self.globals[idx] = self.pop()
             elif op == Opcode.GETGLOBAL:
                 idx = int.from_bytes(
-                    self.instructions[ip + 1 : ip + 3], byteorder="big"
+                    ins[ip + 1 : ip + 3], byteorder="big"
                 )
                 ip += 2
                 err = self.push(self.globals[idx])
@@ -128,7 +147,7 @@ class VM:
                 self.pop()
             elif op == Opcode.ARRAY:
                 arr_size = int.from_bytes(
-                    self.instructions[ip + 1 : ip + 3], byteorder="big"
+                    ins[ip + 1 : ip + 3], byteorder="big"
                 )
                 ip += 2
                 elems: List[Object] = [Object()] * arr_size
@@ -140,7 +159,7 @@ class VM:
                     return err
             elif op == Opcode.MAP:
                 map_size = int.from_bytes(
-                    self.instructions[ip + 1 : ip + 3], byteorder="big"
+                    ins[ip + 1 : ip + 3], byteorder="big"
                 )
                 ip += 2
                 map: Dict[Object, Object] = {}
@@ -171,7 +190,8 @@ class VM:
                 err = self.push(NullObject())
                 if err:
                     return err
-            ip += 1
+
+            self._current_frame().ip = ip
 
         return None
 
@@ -255,3 +275,14 @@ class VM:
             return False
         else:
             return bool(obj.value)
+
+    def _current_frame(self) -> Frame:
+        return self.frames[self.frame_index]
+
+    def _push_frame(self, frame: Frame) -> None:
+        self.frames.append(frame)
+        self.frame_index += 1
+
+    def _pop_frame(self) -> Frame:
+        self.frame_index -= 1
+        return self.frames.pop()

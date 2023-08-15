@@ -397,6 +397,58 @@ def test_functions():
             make(Opcode.POP, []),
         ],
     )
+    run_compiler_test(
+        "fn() { 5 + 10 }",
+        [
+            5,
+            10,
+            concat_insts(
+                [
+                    make(Opcode.CONSTANT, [0]),
+                    make(Opcode.CONSTANT, [1]),
+                    make(Opcode.ADD, []),
+                    make(Opcode.RETURNVALUE, []),
+                ]
+            ),
+        ],
+        [
+            make(Opcode.CONSTANT, [2]),
+            make(Opcode.POP, []),
+        ],
+    )
+    run_compiler_test(
+        "fn() { 5; 10 }",
+        [
+            5,
+            10,
+            concat_insts(
+                [
+                    make(Opcode.CONSTANT, [0]),
+                    make(Opcode.POP, []),
+                    make(Opcode.CONSTANT, [1]),
+                    make(Opcode.RETURNVALUE, []),
+                ]
+            ),
+        ],
+        [
+            make(Opcode.CONSTANT, [2]),
+            make(Opcode.POP, []),
+        ],
+    )
+    run_compiler_test(
+        "fn() { }",
+        [
+            concat_insts(
+                [
+                    make(Opcode.RETURN, []),
+                ]
+            ),
+        ],
+        [
+            make(Opcode.CONSTANT, [0]),
+            make(Opcode.POP, []),
+        ],
+    )
 
 
 def test_scopes():
@@ -419,3 +471,42 @@ def test_scopes():
 
     assert compiler.scopes[compiler.scope_index].last_ins.opcode == Opcode.ADD
     assert compiler.scopes[compiler.scope_index].prev_ins.opcode == Opcode.MUL
+
+
+def test_calls():
+    run_compiler_test(
+        "fn() { 24 }()",
+        [
+            24,
+            concat_insts(
+                [
+                    make(Opcode.CONSTANT, [0]),
+                    make(Opcode.RETURNVALUE, []),
+                ]
+            ),
+        ],
+        [
+            make(Opcode.CONSTANT, [1]),
+            make(Opcode.CALL, []),
+            make(Opcode.POP, []),
+        ],
+    )
+    run_compiler_test(
+        "let no_arg = fn() { 24 }; no_arg()",
+        [
+            24,
+            concat_insts(
+                [
+                    make(Opcode.CONSTANT, [0]),
+                    make(Opcode.RETURNVALUE, []),
+                ]
+            ),
+        ],
+        [
+            make(Opcode.CONSTANT, [1]),
+            make(Opcode.SETGLOBAL, [0]),
+            make(Opcode.GETGLOBAL, [0]),
+            make(Opcode.CALL, []),
+            make(Opcode.POP, []),
+        ],
+    )

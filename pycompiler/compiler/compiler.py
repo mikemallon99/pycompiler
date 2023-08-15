@@ -12,6 +12,7 @@ from pycompiler.parser import (
     InfixExpression,
     PrefixExpression,
     IfExpression,
+    CallExpression,
     Literal,
     IntLiteral,
     FunctionLiteral,
@@ -145,7 +146,7 @@ class Compiler:
                 err = self.compile(expression.consequence.statements)
                 if err:
                     return err
-                if self._last_ins_is_pop():
+                if self._last_ins_is(Opcode.POP):
                     self._remove_last_ins()
                 jump_op_pos: int = self._emit(Opcode.JUMP, [9999])
                 after_cons_pos = len(self._current_instructions())
@@ -155,13 +156,17 @@ class Compiler:
                     err = self.compile(expression.alternative.statements)
                     if err:
                         return err
-                    if self._last_ins_is_pop():
+                    if self._last_ins_is(Opcode.POP):
                         self._remove_last_ins()
                 else:
                     self._emit(Opcode.NULL, [])
                 after_alt_pos = len(self._current_instructions())
                 self._change_operand(jump_op_pos, [after_alt_pos])
-
+            case CallExpression():
+                err = self._compile_expression(expression.func)
+                if err:
+                    return err
+                self._emit(Opcode.CALL, [])
             case _:
                 return f"Expression {expression} not implemented"
 
@@ -199,6 +204,11 @@ class Compiler:
                 err = self.compile(literal.body.statements)
                 if err:
                     return err
+                if self._last_ins_is(Opcode.POP):
+                    self._remove_last_ins()
+                    self._emit(Opcode.RETURNVALUE, [])
+                if not self._last_ins_is(Opcode.RETURNVALUE):
+                    self._emit(Opcode.RETURN, [])
                 instructions = self._leave_scope()
                 self._emit(Opcode.CONSTANT, [self._add_constant(CompiledFunctionObject(instructions))])
             case _:
@@ -266,8 +276,8 @@ class Compiler:
     def _current_instructions(self) -> Instructions:
         return self._current_scope().instructions
 
-    def _last_ins_is_pop(self) -> bool:
-        return self._current_scope().last_ins.opcode == Opcode.POP
+    def _last_ins_is(self, opcode: Opcode) -> bool:
+        return self._current_scope().last_ins.opcode == opcode
 
     def _remove_last_ins(self) -> None:
         self._current_scope().instructions = self._current_instructions()[: self._current_scope().last_ins.pos]
