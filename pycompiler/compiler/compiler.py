@@ -43,7 +43,7 @@ class Compiler:
 
         self.symbol_table: SymbolTable = SymbolTable()
 
-    def compile(self, ast: List[Statement]) -> Error:
+    def compile(self, ast: List[Statement]) -> Error | None:
         for statement in ast:
             match statement:
                 case ExpressionStatement():
@@ -68,7 +68,7 @@ class Compiler:
     def bytecode(self) -> Bytecode:
         return self.instructions, self.constants
 
-    def _compile_expression(self, expression: Expression) -> Error:
+    def _compile_expression(self, expression: Expression) -> Error | None:
         match expression:
             case LiteralExpression():
                 err = self._compile_literal(expression.literal)
@@ -152,6 +152,8 @@ class Compiler:
             case _:
                 return f"Expression {expression} not implemented"
 
+        return None
+
     def _compile_literal(self, literal: Literal):
         match literal:
             case IntLiteral():
@@ -176,7 +178,7 @@ class Compiler:
                     return err
             case IdentifierLiteral():
                 result, symbol = self.symbol_table.resolve(literal.token.token_value)
-                if not result:
+                if not result or not symbol:
                     return f"Cannot resolve identifier {literal.token.token_value}"
                 self._emit(Opcode.GETGLOBAL, [symbol.index])
             case _:

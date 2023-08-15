@@ -8,9 +8,9 @@ from pycompiler.objects import (
     MapObject,
 )
 from pycompiler.compiler import Bytecode
-from pycompiler.code import Instructions, Opcode, lookup_opcode
+from pycompiler.code import Instructions, Opcode
 
-from typing import Optional
+from typing import Optional, List, Dict
 
 STACK_SIZE = 2048
 GLOBALS_SIZE = 65536
@@ -36,7 +36,7 @@ class VM:
     def last_popped(self) -> Object:
         return self.stack[self.sp]
 
-    def push(self, obj: Object) -> Optional[Error]:
+    def push(self, obj: Object) -> Error | None:
         if self.sp >= STACK_SIZE:
             return "Stack Overflow"
 
@@ -48,8 +48,9 @@ class VM:
         self.sp -= 1
         return self.stack[self.sp]
 
-    def run(self) -> Optional[Error]:
+    def run(self) -> Error | None:
         ip = 0
+        operand: Object
         while ip < len(self.instructions):
             op = Opcode(self.instructions[ip])
             if op == Opcode.CONSTANT:
@@ -76,12 +77,12 @@ class VM:
                 if err:
                     return err
             elif op == Opcode.BANG:
-                operand: Object = self.pop()
+                operand = self.pop()
                 err = self.push(BooleanObject(not self._is_truthy(operand)))
                 if err:
                     return err
             elif op == Opcode.MINUS:
-                operand: Object = self.pop()
+                operand = self.pop()
                 if isinstance(operand, IntObject):
                     err = self.push(IntObject(-1 * operand.value))
                     if err:
@@ -174,36 +175,38 @@ class VM:
 
         return None
 
-    def _execute_binary_op(self, op: Opcode) -> Error:
+    def _execute_binary_op(self, op: Opcode) -> Error | None:
         right: Object = self.pop()
         left: Object = self.pop()
 
         if isinstance(left, IntObject) and isinstance(right, IntObject):
-            right_val: int = right.value
-            left_val: int = left.value
+            right_int: int = right.value
+            left_int: int = left.value
+            out_int: int
             match op:
                 case Opcode.ADD:
-                    out_val = left_val + right_val
+                    out_int = left_int + right_int
                 case Opcode.SUB:
-                    out_val = left_val - right_val
+                    out_int = left_int - right_int
                 case Opcode.MUL:
-                    out_val = left_val * right_val
+                    out_int = left_int * right_int
                 case Opcode.DIV:
-                    out_val = left_val / right_val
+                    out_int = left_int // right_int
                 case _:
                     return f"IntObject arithmetic not found for {op}"
-            err = self.push(IntObject(out_val))
+            err = self.push(IntObject(out_int))
             if err:
                 return err
         elif isinstance(left, StringObject) and isinstance(right, StringObject):
-            right_val: str = right.value
-            left_val: str = left.value
+            right_str: str = right.value
+            left_str: str = left.value
+            out_str: str
             match op:
                 case Opcode.ADD:
-                    out_val = left_val + right_val
+                    out_str = left_str + right_str
                 case _:
                     return f"IntObject arithmetic not found for {op}"
-            err = self.push(StringObject(out_val))
+            err = self.push(StringObject(out_str))
             if err:
                 return err
         else:
@@ -211,7 +214,7 @@ class VM:
 
         return None
 
-    def _execute_comparison(self, op: Opcode) -> Error:
+    def _execute_comparison(self, op: Opcode) -> Error | None:
         right: Object = self.pop()
         left: Object = self.pop()
 
@@ -230,6 +233,10 @@ class VM:
             err = self.push(BooleanObject(out_val))
             if err:
                 return err
+        elif isinstance(left, NullObject) and isinstance(right, NullObject):
+            err = self.push(BooleanObject(True))
+        elif isinstance(left, Object) or isinstance(right, Object):
+            return f"Object comparison cannot be done for generic Object type"
         else:
             match op:
                 case Opcode.EQUAL:
@@ -247,6 +254,8 @@ class VM:
 
     def _is_truthy(self, obj: Object) -> bool:
         if isinstance(obj, NullObject):
+            return False
+        elif isinstance(obj, Object):
             return False
         else:
             return bool(obj.value)

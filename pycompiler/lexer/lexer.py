@@ -49,11 +49,12 @@ class TokenType(Enum):
 
 class Token:
     def __init__(self, token_type: TokenType, token_value: Optional[str] = None):
-        self.token_type: Token = token_type
+        self.token_type: TokenType = token_type
+        self.token_value: str
         if token_value:
-            self.token_value: str = token_value
+            self.token_value = token_value
         else:
-            self.token_value: str = token_type.value
+            self.token_value = token_type.value
 
     def __eq__(self, other):
         return (
@@ -73,7 +74,7 @@ class Lexer:
         # position of the next byte read
         self.read_position: int = 0
 
-        self.cur_byte: char = ""
+        self.cur_byte: str = ""
 
         # Load up the first token into cur_byte
         self._read_char()

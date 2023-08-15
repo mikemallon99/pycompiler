@@ -78,7 +78,7 @@ def test_prefix():
     run_vm_test("!(2 > 3)", BooleanObject(True))
 
 
-def test_prefix():
+def test_if_else():
     run_vm_test("if (true) {10}", IntObject(10))
     run_vm_test("if (true) {10} else {20}", IntObject(10))
     run_vm_test("if (false) {10} else {20}; 30", IntObject(30))

@@ -54,7 +54,7 @@ class LetStatement(Statement):
         self.ident: Token = ident
         self.expr: Expression = expr
 
-    def __eq__(self, other: Statement):
+    def __eq__(self, other: object):
         if not isinstance(other, LetStatement):
             return NotImplemented
         return self.ident == other.ident and self.expr == other.expr
@@ -67,7 +67,7 @@ class ReturnStatement(Statement):
     def __init__(self, expr: Expression):
         self.expr: Expression = expr
 
-    def __eq__(self, other: Statement):
+    def __eq__(self, other: object):
         if not isinstance(other, ReturnStatement):
             return NotImplemented
         return self.expr == other.expr
@@ -80,7 +80,7 @@ class ExpressionStatement(Statement):
     def __init__(self, expr: Expression):
         self.expr: Expression = expr
 
-    def __eq__(self, other: Statement):
+    def __eq__(self, other: object):
         if not isinstance(other, ExpressionStatement):
             return NotImplemented
         return self.expr == other.expr
@@ -93,7 +93,7 @@ class BlockStatement(Statement):
     def __init__(self, statements: List[Statement]):
         self.statements: List[Statement] = statements
 
-    def __eq__(self, other: Statement):
+    def __eq__(self, other: object):
         if not isinstance(other, BlockStatement):
             return NotImplemented
         return self.statements == other.statements
@@ -110,7 +110,7 @@ class IdentifierLiteral(Literal):
     def __init__(self, token: Token):
         self.token: Token = token
 
-    def __eq__(self, other: Literal):
+    def __eq__(self, other: object):
         if not isinstance(other, IdentifierLiteral):
             return NotImplemented
         return self.token == other.token
@@ -124,7 +124,7 @@ class IntLiteral(Literal):
         self.token: Token = token
         self.value: int = value
 
-    def __eq__(self, other: Literal):
+    def __eq__(self, other: object):
         if not isinstance(other, IntLiteral):
             return NotImplemented
         return self.token == other.token and self.value == other.value
@@ -138,7 +138,7 @@ class StringLiteral(Literal):
         self.token: Token = token
         self.value: str = value
 
-    def __eq__(self, other: Literal):
+    def __eq__(self, other: object):
         if not isinstance(other, StringLiteral):
             return NotImplemented
         return self.token == other.token and self.value == other.value
@@ -152,7 +152,7 @@ class FunctionLiteral(Literal):
         self.arguments: List[Token] = arguments
         self.body: BlockStatement = body
 
-    def __eq__(self, other: Literal):
+    def __eq__(self, other: object):
         if not isinstance(other, FunctionLiteral):
             return NotImplemented
         return self.arguments == other.arguments and self.body == other.body
@@ -166,7 +166,7 @@ class BooleanLiteral(Literal):
         self.token: Token = token
         self.value: bool = value
 
-    def __eq__(self, other: Literal):
+    def __eq__(self, other: object):
         if not isinstance(other, BooleanLiteral):
             return NotImplemented
         return self.token == other.token and self.value == other.value
@@ -179,7 +179,7 @@ class ArrayLiteral(Literal):
     def __init__(self, members: List[Expression]):
         self.members: List[Expression] = members
 
-    def __eq__(self, other: Literal):
+    def __eq__(self, other: object):
         if not isinstance(other, ArrayLiteral):
             return NotImplemented
         return self.members == other.members
@@ -195,7 +195,7 @@ class MapLiteral(Literal):
     def __init__(self, pairs: List[ExpressionPair]):
         self.pairs: List[ExpressionPair] = pairs
 
-    def __eq__(self, other: Literal):
+    def __eq__(self, other: object):
         if not isinstance(other, MapLiteral):
             return NotImplemented
         return self.pairs == other.pairs
@@ -208,7 +208,7 @@ class LiteralExpression(Expression):
     def __init__(self, literal: Literal):
         self.literal: Literal = literal
 
-    def __eq__(self, other: Expression):
+    def __eq__(self, other: object):
         if not isinstance(other, LiteralExpression):
             return NotImplemented
         return self.literal == other.literal
@@ -222,7 +222,7 @@ class PrefixExpression(Expression):
         self.operator: Token = operator
         self.right: Expression = right
 
-    def __eq__(self, other: Expression):
+    def __eq__(self, other: object):
         if not isinstance(other, PrefixExpression):
             return NotImplemented
         return self.operator == other.operator and self.right == other.right
@@ -237,7 +237,7 @@ class InfixExpression(Expression):
         self.operator: Token = operator
         self.right: Expression = right
 
-    def __eq__(self, other: Expression):
+    def __eq__(self, other: object):
         if not isinstance(other, InfixExpression):
             return NotImplemented
         return (
@@ -261,7 +261,7 @@ class IfExpression(Expression):
         self.consequence: BlockStatement = consequence
         self.alternative: Optional[BlockStatement] = alternative
 
-    def __eq__(self, other: Expression):
+    def __eq__(self, other: object):
         if not isinstance(other, IfExpression):
             return NotImplemented
         return (
@@ -279,7 +279,7 @@ class CallExpression(Expression):
         self.func: Expression = func
         self.args: List[Expression] = args
 
-    def __eq__(self, other: Expression):
+    def __eq__(self, other: object):
         if not isinstance(other, CallExpression):
             return NotImplemented
         return self.func == other.func and self.args == other.args
@@ -309,13 +309,14 @@ class Parser:
         return program
 
     def _parse_statement(self) -> Statement:
+        statement: Statement
         match self.cur_token.token_type:
             case TokenType.LET:
-                statement: LetStatement = self._parse_let_statement()
+                statement = self._parse_let_statement()
             case TokenType.RETURN:
-                statement: ReturnStatement = self._parse_return_statement()
+                statement = self._parse_return_statement()
             case _:
-                statement: ExpressionStatement = self._parse_expression_statement()
+                statement = self._parse_expression_statement()
 
         # Semicolons optional
         if self.peek_token.token_type == TokenType.SEMICOLON:
@@ -346,6 +347,7 @@ class Parser:
         return BlockStatement(statements)
 
     def _parse_expression(self, precedence: Precedence) -> Expression:
+        left_expr: Expression
         if self.cur_token.token_type in [
             TokenType.IDENT,
             TokenType.INT,
@@ -381,6 +383,7 @@ class Parser:
         return left_expr
 
     def _parse_literal(self) -> LiteralExpression:
+        literal: Literal
         match self.cur_token.token_type:
             case TokenType.IDENT:
                 literal = IdentifierLiteral(self.cur_token)

@@ -4,7 +4,7 @@ from typing import List, Any
 from pycompiler.compiler import Compiler
 from pycompiler.code import make, Opcode, Instructions, instructions_to_str
 from pycompiler.objects import Object, IntObject, StringObject
-from pycompiler.parser import Parser
+from pycompiler.parser import Parser, Statement
 from pycompiler.lexer import Lexer
 
 
@@ -30,7 +30,7 @@ def run_compiler_test(
         concat_insts += ins
 
     # Convert const values to objects
-    const_objects: List[Objects] = []
+    const_objects: List[Object] = []
     for exp_const in exp_consts:
         match type(exp_const):
             case builtins.int:

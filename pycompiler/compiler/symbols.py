@@ -34,6 +34,6 @@ class SymbolTable:
         self.num_defs += 1
         return symbol
 
-    def resolve(self, name) -> Tuple[bool, Symbol]:
+    def resolve(self, name) -> Tuple[bool, Symbol | None]:
         symbol = self.store.get(name)
         return bool(symbol), symbol

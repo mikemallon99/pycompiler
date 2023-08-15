@@ -48,7 +48,7 @@ def instructions_to_str(instructions: Instructions) -> str:
     return out_string
 
 
-def lookup_opcode(op_bytes: bytes) -> Opcode:
+def lookup_opcode(op_bytes: int) -> Opcode:
     op = Opcode.NULL
     for member in Opcode:
         if op_bytes == member.value:
