@@ -124,3 +124,49 @@ def test_index():
     run_vm_test("[1, 2, 3][-1]", NullObject())
     run_vm_test("{1 + 1: 1 + 2, 3 + 3: 3 + 4}[1]", NullObject())
     run_vm_test('{1 + 1: 1 + 2, 3 + 3: 3 + 4}["yo"]', NullObject())
+
+def test_fn_no_args():
+    run_vm_test(
+        "let test = fn () { 5 + 10 }; test()",
+        IntObject(15),
+    )
+    run_vm_test(
+        "let test = fn () { }; test()",
+        NullObject(),
+    )
+    run_vm_test(
+        "let one = fn () { 1 }; let two = fn() {2}; two()",
+        IntObject(2),
+    )
+    run_vm_test(
+        "let one = fn () { 1 }; let two = fn() {2}; two(); two()",
+        IntObject(2),
+    )
+    run_vm_test(
+        "let one = fn () { 1 }; let two = fn() {2}; two() + two()",
+        IntObject(4),
+    )
+    run_vm_test(
+        "let one = fn () { 1 }; let two = fn() {2}; one() + two()",
+        IntObject(3),
+    )
+    run_vm_test(
+        "let one = fn () { 1 }; let two = fn() { one() + one() }; two() * two()",
+        IntObject(4),
+    )
+    run_vm_test(
+        "let one = fn () { return 99; 100 }; one()",
+        IntObject(99),
+    )
+    run_vm_test(
+        "let one = fn () { return 99; return 100 }; one()",
+        IntObject(99),
+    )
+    run_vm_test(
+        "let one = fn () { }; let two = fn () { one() }; two()",
+        NullObject(),
+    )
+    run_vm_test(
+        "let one = fn () { 1 }; let two = fn () { one }; two()()",
+        IntObject(1),
+    )
