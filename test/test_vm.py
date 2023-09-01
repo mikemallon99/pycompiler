@@ -166,6 +166,7 @@ def test_fn_no_args():
         "let one = fn () { }; let two = fn () { one() }; two()",
         NullObject(),
     )
+    # First class function
     run_vm_test(
         "let one = fn () { 1 }; let two = fn () { one }; two()()",
         IntObject(1),

@@ -198,6 +198,13 @@ class VM:
                 err = self.push(value)
                 if err:
                     return err
+            elif op == Opcode.RETURN:
+                self._pop_frame()
+                # Pop compiled function object from stack
+                self.pop()
+                err = self.push(NullObject())
+                if err:
+                    return err
             elif op == Opcode.NULL:
                 err = self.push(NullObject())
                 if err:

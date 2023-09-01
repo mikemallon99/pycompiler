@@ -454,17 +454,21 @@ def test_functions():
 def test_scopes():
     compiler = Compiler()
     assert compiler.scope_index == 0
+    global_symbol_table = compiler.symbol_table
 
     compiler._emit(Opcode.MUL, [])
 
     compiler._enter_scope()
     assert compiler.scope_index == 1
+    local_symbol_table = compiler.symbol_table
+    assert local_symbol_table.outer == global_symbol_table
 
     compiler._emit(Opcode.SUB, [])
     assert len(compiler.scopes[compiler.scope_index].instructions) == 1
 
     compiler._leave_scope()
     assert compiler.scope_index == 0
+    assert compiler.symbol_table == global_symbol_table
 
     compiler._emit(Opcode.ADD, [])
     assert len(compiler.scopes[compiler.scope_index].instructions) == 2
@@ -532,3 +536,65 @@ def test_calls():
             make(Opcode.POP, []),
         ],
     )
+
+def test_local_vars():
+    run_compiler_test(
+        "let num = 5; fn() { num }",
+        [
+            5,
+            concat_insts(
+                [
+                    make(Opcode.GETGLOBAL, [0]),
+                    make(Opcode.RETURNVALUE, []),
+                ]
+            ),
+        ],
+        [
+            make(Opcode.CONSTANT, [0]),
+            make(Opcode.SETGLOBAL, [0]),
+            make(Opcode.CONSTANT, [1]),
+            make(Opcode.POP, []),
+        ],
+    )
+    run_compiler_test(
+        "fn() { let num = 5; num }",
+        [
+            5,
+            concat_insts(
+                [
+                    make(Opcode.CONSTANT, [0]),
+                    make(Opcode.SETLOCAL, [0]),
+                    make(Opcode.GETLOCAL, [0]),
+                    make(Opcode.RETURNVALUE, []),
+                ]
+            ),
+        ],
+        [
+            make(Opcode.CONSTANT, [1]),
+            make(Opcode.POP, []),
+        ],
+    )
+    run_compiler_test(
+        "fn() { let a = 5; let b = 7; a + b }",
+        [
+            5,
+            7,
+            concat_insts(
+                [
+                    make(Opcode.CONSTANT, [0]),
+                    make(Opcode.SETLOCAL, [0]),
+                    make(Opcode.CONSTANT, [1]),
+                    make(Opcode.SETLOCAL, [1]),
+                    make(Opcode.GETLOCAL, [0]),
+                    make(Opcode.GETLOCAL, [1]),
+                    make(Opcode.ADD, []),
+                    make(Opcode.RETURNVALUE, []),
+                ]
+            ),
+        ],
+        [
+            make(Opcode.CONSTANT, [2]),
+            make(Opcode.POP, []),
+        ],
+    )
+

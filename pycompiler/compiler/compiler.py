@@ -23,7 +23,7 @@ from pycompiler.parser import (
     IdentifierLiteral,
 )
 
-from .symbols import SymbolTable
+from .symbols import SymbolTable, GLOBALSCOPE, LOCALSCOPE
 
 
 Bytecode = Tuple[Instructions, List[Object]]
@@ -68,7 +68,10 @@ class Compiler:
 
                     # Assign result of expression to identifier
                     symbol = self.symbol_table.define(statement.ident.token_value)
-                    self._emit(Opcode.SETGLOBAL, [symbol.index])
+                    if symbol.scope == GLOBALSCOPE:
+                        self._emit(Opcode.SETGLOBAL, [symbol.index])
+                    else:
+                        self._emit(Opcode.SETLOCAL, [symbol.index])
                 case ReturnStatement():
                     err = self._compile_expression(statement.expr)
                     if err:
@@ -198,7 +201,10 @@ class Compiler:
                 result, symbol = self.symbol_table.resolve(literal.token.token_value)
                 if not result or not symbol:
                     return f"Cannot resolve identifier {literal.token.token_value}"
-                self._emit(Opcode.GETGLOBAL, [symbol.index])
+                if symbol.scope == GLOBALSCOPE:
+                    self._emit(Opcode.GETGLOBAL, [symbol.index])
+                else:
+                    self._emit(Opcode.GETLOCAL, [symbol.index])
             case FunctionLiteral():
                 self._enter_scope()
                 err = self.compile(literal.body.statements)
@@ -264,10 +270,12 @@ class Compiler:
     def _enter_scope(self):
         self.scope_index += 1
         self.scopes.append(CompilerScope())
+        self.symbol_table = SymbolTable(self.symbol_table)
 
     def _leave_scope(self) -> Instructions:
         self.scope_index -= 1
         scope = self.scopes.pop()
+        self.symbol_table = self.symbol_table.outer
         return scope.instructions
 
     def _current_scope(self) -> CompilerScope:

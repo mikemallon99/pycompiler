@@ -14,6 +14,12 @@ def test_make_constant():
     assert instruction[1:] == (65534).to_bytes(2, byteorder="big")
 
 
+def test_make_getlocal():
+    instruction: Instructions = make(Opcode.GETLOCAL, [255])
+    assert instruction[0] == Opcode.GETLOCAL.value
+    assert instruction[1:] == (255).to_bytes(1, byteorder="big")
+
+
 def test_make_add():
     instruction: Instructions = make(Opcode.ADD, [])
     assert instruction[0] == Opcode.ADD.value
@@ -25,9 +31,10 @@ def test_instr_strings():
         make(Opcode.ADD, []),
         make(Opcode.CONSTANT, [2]),
         make(Opcode.CONSTANT, [65535]),
+        make(Opcode.GETLOCAL, [255]),
     ]
 
-    expected = "0000 ADD\n" "0001 CONSTANT 2\n" "0004 CONSTANT 65535\n"
+    expected = "0000 ADD\n" "0001 CONSTANT 2\n" "0004 CONSTANT 65535\n" "0007 GETLOCAL 255\n"
 
     concatted: Instructions = bytearray()
     for ins in instructions:

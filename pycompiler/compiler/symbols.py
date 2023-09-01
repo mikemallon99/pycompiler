@@ -1,7 +1,8 @@
-from typing import Dict, Tuple, Any
+from typing import Dict, Tuple, Any, Optional
 
 Scope = str
 GLOBALSCOPE: Scope = Scope("GLOBAL")
+LOCALSCOPE: Scope = Scope("LOCAL")
 
 
 class Symbol:
@@ -24,16 +25,23 @@ class Symbol:
 
 
 class SymbolTable:
-    def __init__(self):
+    def __init__(self, outer=None):
         self.store: Dict[str, Symbol] = {}
+        self.outer = outer
         self.num_defs: int = 0
 
     def define(self, name) -> Symbol:
-        symbol = Symbol(name, GLOBALSCOPE, self.num_defs)
+        if self.outer:
+            symbol = Symbol(name, LOCALSCOPE, self.num_defs)
+        else:
+            symbol = Symbol(name, GLOBALSCOPE, self.num_defs)
         self.store[name] = symbol
         self.num_defs += 1
         return symbol
 
     def resolve(self, name) -> Tuple[bool, Symbol | None]:
         symbol = self.store.get(name)
+        if not symbol and self.outer:
+            return self.outer.resolve(name)
         return bool(symbol), symbol
+
