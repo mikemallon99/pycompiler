@@ -171,3 +171,22 @@ def test_fn_no_args():
         "let one = fn () { 1 }; let two = fn () { one }; two()()",
         IntObject(1),
     )
+
+
+def test_fn_local_bindings():
+    run_vm_test(
+        "let test = fn () { let a = 5; a }; test()",
+        IntObject(5),
+    )
+    run_vm_test(
+        "let onetwo = fn () { let a = 1; let b = 2; a + b }; onetwo()",
+        IntObject(3),
+    )
+    run_vm_test(
+        "let onetwo = fn () { let a = 1; let b = 2; a + b }; let threefour = fn () { let c = 3; let d = 4; c + d }; onetwo() + threefour()",
+        IntObject(10),
+    )
+    run_vm_test(
+        "let global_num = 100; let test = fn () { let a = 5; global_num - a }; test()",
+        IntObject(95),
+    )
