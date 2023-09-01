@@ -1,6 +1,6 @@
 from typing import Dict, List, Tuple
 from pycompiler.parser import FunctionLiteral
-from pycompiler.code import Instructions
+from pycompiler.code import Instructions, instructions_to_str
 
 
 
@@ -114,7 +114,7 @@ class CompiledFunctionObject(Object):
         return self.value == other.value
 
     def __repr__(self):
-        return f"<CompiledFunctionObject: value={self.value}>"
+        return f"<CompiledFunctionObject: value={instructions_to_str(self.value)}>"
 
 
 class BooleanObject(Object):

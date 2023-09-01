@@ -186,18 +186,18 @@ class VM:
                 else:
                     return "Index operator not implemented for input types"
             elif op == Opcode.CALL:
-                func = self.pop()
-                if isinstance(func, CompiledFunctionObject):
-                    self._push_frame(Frame(func))
-                else:
-                    return "Cannot call an object that isnt a function."
+                fn = self.stack[self.sp-1]
+                if not isinstance(fn, CompiledFunctionObject):
+                    return "Error attempting to call non-function"
+                self._push_frame(Frame(fn))
             elif op == Opcode.RETURNVALUE:
-                # Return value already on the stack
+                value = self.pop()
                 self._pop_frame()
-            elif op == Opcode.RETURN:
-                self._pop_frame()
-                self.push(NullObject())
-
+                # Pop compiled function object from stack
+                self.pop()
+                err = self.push(value)
+                if err:
+                    return err
             elif op == Opcode.NULL:
                 err = self.push(NullObject())
                 if err:
