@@ -124,3 +124,7 @@ def test_index():
     run_vm_test("[1, 2, 3][-1]", NullObject())
     run_vm_test("{1 + 1: 1 + 2, 3 + 3: 3 + 4}[1]", NullObject())
     run_vm_test('{1 + 1: 1 + 2, 3 + 3: 3 + 4}["yo"]', NullObject())
+
+
+def test_index():
+    run_vm_test("let five_plus_ten = fn() { 5 + 10; }; five_plus_ten()", IntObject(15))

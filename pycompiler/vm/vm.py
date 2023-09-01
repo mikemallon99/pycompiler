@@ -76,7 +76,7 @@ class VM:
                 index = int.from_bytes(
                     ins[ip + 1 : ip + 3], byteorder="big"
                 )
-                ip += 2
+                self._current_frame().ip += 2
                 err = self.push(self.constants[index])
                 if err:
                     return err
@@ -120,26 +120,26 @@ class VM:
                 pos = int.from_bytes(
                     ins[ip + 1 : ip + 3], byteorder="big"
                 )
-                ip = pos - 1
+                self._current_frame().ip = pos - 1
             elif op == Opcode.JUMPCOND:
                 pos = int.from_bytes(
                     ins[ip + 1 : ip + 3], byteorder="big"
                 )
-                ip += 2
+                self._current_frame().ip += 2
 
                 if not self._is_truthy(self.pop()):
-                    ip = pos - 1
+                    self._current_frame().ip = pos - 1
             elif op == Opcode.SETGLOBAL:
                 idx = int.from_bytes(
                     ins[ip + 1 : ip + 3], byteorder="big"
                 )
-                ip += 2
+                self._current_frame().ip += 2
                 self.globals[idx] = self.pop()
             elif op == Opcode.GETGLOBAL:
                 idx = int.from_bytes(
                     ins[ip + 1 : ip + 3], byteorder="big"
                 )
-                ip += 2
+                self._current_frame().ip += 2
                 err = self.push(self.globals[idx])
                 if err:
                     return err
@@ -149,7 +149,7 @@ class VM:
                 arr_size = int.from_bytes(
                     ins[ip + 1 : ip + 3], byteorder="big"
                 )
-                ip += 2
+                self._current_frame().ip += 2
                 elems: List[Object] = [Object()] * arr_size
                 for i in range(0, arr_size):
                     elems[i] = self.stack[self.sp - arr_size + i]
@@ -161,7 +161,7 @@ class VM:
                 map_size = int.from_bytes(
                     ins[ip + 1 : ip + 3], byteorder="big"
                 )
-                ip += 2
+                self._current_frame().ip += 2
                 map: Dict[Object, Object] = {}
                 for i in range(0, map_size):
                     key: Object = self.stack[self.sp - map_size * 2 + 2 * i]
@@ -185,13 +185,23 @@ class VM:
                         return err
                 else:
                     return "Index operator not implemented for input types"
-
+            elif op == Opcode.CALL:
+                fn = self.stack[self.sp-1]
+                if not isinstance(fn, CompiledFunctionObject):
+                    return "Error attempting to call non-function"
+                self._push_frame(Frame(fn))
+            elif op == Opcode.RETURNVALUE:
+                value = self.pop()
+                self._pop_frame()
+                # Pop compiled function object from stack
+                self.pop()
+                err = self.push(value)
+                if err:
+                    return err
             elif op == Opcode.NULL:
                 err = self.push(NullObject())
                 if err:
                     return err
-
-            self._current_frame().ip = ip
 
         return None
 

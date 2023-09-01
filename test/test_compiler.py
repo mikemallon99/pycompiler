@@ -510,3 +510,25 @@ def test_calls():
             make(Opcode.POP, []),
         ],
     )
+    run_compiler_test(
+        "let no_arg = fn() { 10 + 5; }; no_arg()",
+        [
+            10,
+            5,
+            concat_insts(
+                [
+                    make(Opcode.CONSTANT, [0]),
+                    make(Opcode.CONSTANT, [1]),
+                    make(Opcode.ADD, []),
+                    make(Opcode.RETURNVALUE, []),
+                ]
+            ),
+        ],
+        [
+            make(Opcode.CONSTANT, [2]),
+            make(Opcode.SETGLOBAL, [0]),
+            make(Opcode.GETGLOBAL, [0]),
+            make(Opcode.CALL, []),
+            make(Opcode.POP, []),
+        ],
+    )
