@@ -105,8 +105,9 @@ class FunctionObject(Object):
 
 
 class CompiledFunctionObject(Object):
-    def __init__(self, value: Instructions):
+    def __init__(self, value: Instructions, num_locals: int):
         self.value: Instructions = value
+        self.num_locals: int = num_locals
 
     def __eq__(self, other: object):
         if not isinstance(other, CompiledFunctionObject):

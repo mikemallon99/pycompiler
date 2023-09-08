@@ -20,9 +20,10 @@ Error = str
 
 
 class Frame:
-    def __init__(self, fn) -> None:
+    def __init__(self, fn, base_pointer: int) -> None:
         self.ip: int = -1
         self.fn: CompiledFunctionObject = fn
+        self.base_pointer: int = base_pointer
 
     def get_instructions(self) -> Instructions:
         return self.fn.value
@@ -32,7 +33,7 @@ class VM:
     def __init__(self, bytecode: Bytecode):
         self.constants: List[Object] = bytecode[1]
 
-        self.frames: List[Frame] = [Frame(CompiledFunctionObject(bytecode[0]))]
+        self.frames: List[Frame] = [Frame(CompiledFunctionObject(bytecode[0], 0), 0)]
         self.frame_index: int = 0
 
         self.stack: List[Object] = [Object()] * STACK_SIZE
@@ -143,6 +144,20 @@ class VM:
                 err = self.push(self.globals[idx])
                 if err:
                     return err
+            elif op == Opcode.SETLOCAL:
+                idx = int.from_bytes(
+                    ins[ip + 1 : ip + 2], byteorder="big"
+                )
+                self._current_frame().ip += 1
+                self.stack[self._current_frame().base_pointer + idx] = self.pop()
+            elif op == Opcode.GETLOCAL:
+                idx = int.from_bytes(
+                    ins[ip + 1 : ip + 2], byteorder="big"
+                )
+                self._current_frame().ip += 1
+                err = self.push(self.stack[self._current_frame().base_pointer + idx])
+                if err:
+                    return err
             elif op == Opcode.POP:
                 self.pop()
             elif op == Opcode.ARRAY:
@@ -189,19 +204,21 @@ class VM:
                 fn = self.stack[self.sp-1]
                 if not isinstance(fn, CompiledFunctionObject):
                     return "Error attempting to call non-function"
-                self._push_frame(Frame(fn))
+                frame = Frame(fn, self.sp)
+                self._push_frame(frame)
+                self.sp += frame.base_pointer + fn.num_locals
             elif op == Opcode.RETURNVALUE:
                 value = self.pop()
+                # Return to base ptr & Pop compiled function object from stack
+                self.sp = self._current_frame().base_pointer - 1
                 self._pop_frame()
-                # Pop compiled function object from stack
-                self.pop()
                 err = self.push(value)
                 if err:
                     return err
             elif op == Opcode.RETURN:
+                # Return to base ptr & Pop compiled function object from stack
+                self.sp = self._current_frame().base_pointer - 1
                 self._pop_frame()
-                # Pop compiled function object from stack
-                self.pop()
                 err = self.push(NullObject())
                 if err:
                     return err

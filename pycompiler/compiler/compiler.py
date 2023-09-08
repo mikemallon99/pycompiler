@@ -215,8 +215,9 @@ class Compiler:
                     self._emit(Opcode.RETURNVALUE, [])
                 if not self._last_ins_is(Opcode.RETURNVALUE):
                     self._emit(Opcode.RETURN, [])
+                num_locals = self.symbol_table.num_defs
                 instructions = self._leave_scope()
-                self._emit(Opcode.CONSTANT, [self._add_constant(CompiledFunctionObject(instructions))])
+                self._emit(Opcode.CONSTANT, [self._add_constant(CompiledFunctionObject(instructions, num_locals))])
             case _:
                 return f"Literal {literal} not implemented"
 

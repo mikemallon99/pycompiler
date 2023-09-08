@@ -46,7 +46,7 @@ def run_compiler_test(
     const_objects: List[Object] = []
     for exp_const in exp_consts:
         if isinstance(exp_const, Instructions):
-            const_objects.append(CompiledFunctionObject(exp_const))
+            const_objects.append(CompiledFunctionObject(exp_const, 0))
         elif isinstance(exp_const, builtins.int):
             const_objects.append(IntObject(exp_const))
         elif isinstance(exp_const, builtins.str):
