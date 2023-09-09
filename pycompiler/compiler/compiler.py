@@ -169,7 +169,11 @@ class Compiler:
                 err = self._compile_expression(expression.func)
                 if err:
                     return err
-                self._emit(Opcode.CALL, [])
+                for arg in expression.args:
+                    err = self._compile_expression(arg) 
+                    if err:
+                        return err
+                self._emit(Opcode.CALL, [len(expression.args)])
             case _:
                 return f"Expression {expression} not implemented"
 
@@ -207,6 +211,8 @@ class Compiler:
                     self._emit(Opcode.GETLOCAL, [symbol.index])
             case FunctionLiteral():
                 self._enter_scope()
+                for arg in literal.arguments:
+                    symbol = self.symbol_table.define(arg.token_value)
                 err = self.compile(literal.body.statements)
                 if err:
                     return err
@@ -217,7 +223,7 @@ class Compiler:
                     self._emit(Opcode.RETURN, [])
                 num_locals = self.symbol_table.num_defs
                 instructions = self._leave_scope()
-                self._emit(Opcode.CONSTANT, [self._add_constant(CompiledFunctionObject(instructions, num_locals))])
+                self._emit(Opcode.CONSTANT, [self._add_constant(CompiledFunctionObject(instructions, num_locals, len(literal.arguments)))])
             case _:
                 return f"Literal {literal} not implemented"
 

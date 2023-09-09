@@ -31,12 +31,15 @@ def pytest_assertrepr_compare(op, left, right):
         ]
 
 
-def run_vm_test(test_prog: str, exp_obj: Object):
+def run_vm_test(test_prog: str, exp_obj: Object | str):
     ast: List[Statement] = Parser(Lexer(test_prog)).parse()
     compiler = Compiler()
     compiler.compile(ast)
     vm = VM(compiler.bytecode())
-    vm.run()
+    err = vm.run()
+    if err:
+        assert err == exp_obj
+        return
     assert vm.last_popped() == exp_obj
 
 
@@ -189,4 +192,44 @@ def test_fn_local_bindings():
     run_vm_test(
         "let global_num = 100; let test = fn () { let a = 5; global_num - a }; test()",
         IntObject(95),
+    )
+
+
+def test_fn_args():
+    run_vm_test(
+        "let test = fn (a) { a; }; test(5)",
+        IntObject(5),
+    )
+    run_vm_test(
+        "let test = fn (a, b) { a + b; }; test(5, 6)",
+        IntObject(11),
+    )
+    run_vm_test(
+    """
+        let globalNum = 10;
+
+        let sum = fn(a, b) {
+            let c = a + b;
+            c + globalNum;
+        };
+
+        let outer = fn() {
+            sum(1, 2) + sum(3, 4) + globalNum;
+        };
+
+        outer() + globalNum;
+    """,
+        IntObject(50),
+    )
+    run_vm_test(
+        "fn () { }(1)",
+        "wrong number of args: want 0, got 1",
+    )
+    run_vm_test(
+        "fn (a) { a; }()",
+        "wrong number of args: want 1, got 0",
+    )
+    run_vm_test(
+        "fn (a, b) { a + b; }(1)",
+        "wrong number of args: want 2, got 1",
     )

@@ -33,7 +33,7 @@ class VM:
     def __init__(self, bytecode: Bytecode):
         self.constants: List[Object] = bytecode[1]
 
-        self.frames: List[Frame] = [Frame(CompiledFunctionObject(bytecode[0], 0), 0)]
+        self.frames: List[Frame] = [Frame(CompiledFunctionObject(bytecode[0], 0, 0), 0)]
         self.frame_index: int = 0
 
         self.stack: List[Object] = [Object()] * STACK_SIZE
@@ -201,10 +201,16 @@ class VM:
                 else:
                     return "Index operator not implemented for input types"
             elif op == Opcode.CALL:
-                fn = self.stack[self.sp-1]
+                num_args = int.from_bytes(
+                    ins[ip + 1 : ip + 2], byteorder="big"
+                )
+                self._current_frame().ip += 1
+                fn = self.stack[self.sp - num_args - 1]
                 if not isinstance(fn, CompiledFunctionObject):
                     return "Error attempting to call non-function"
-                frame = Frame(fn, self.sp)
+                if num_args != fn.num_args:
+                    return f"wrong number of args: want {fn.num_args}, got {num_args}"
+                frame = Frame(fn, self.sp - num_args)
                 self._push_frame(frame)
                 self.sp += frame.base_pointer + fn.num_locals
             elif op == Opcode.RETURNVALUE:

@@ -105,14 +105,19 @@ class FunctionObject(Object):
 
 
 class CompiledFunctionObject(Object):
-    def __init__(self, value: Instructions, num_locals: int):
+    def __init__(self, value: Instructions, num_locals: int, num_args: int):
         self.value: Instructions = value
         self.num_locals: int = num_locals
+        self.num_args: int = num_args
 
     def __eq__(self, other: object):
         if not isinstance(other, CompiledFunctionObject):
             return NotImplemented
-        return self.value == other.value
+        return (
+            self.value == other.value 
+            and self.num_locals == other.num_locals 
+            and self.num_args == other.num_args
+        )
 
     def __repr__(self):
         return f"<CompiledFunctionObject: value={instructions_to_str(self.value)}>"

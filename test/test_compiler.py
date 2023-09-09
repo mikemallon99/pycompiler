@@ -46,7 +46,7 @@ def run_compiler_test(
     const_objects: List[Object] = []
     for exp_const in exp_consts:
         if isinstance(exp_const, Instructions):
-            const_objects.append(CompiledFunctionObject(exp_const, 0))
+            const_objects.append(CompiledFunctionObject(exp_const, 0, 0))
         elif isinstance(exp_const, builtins.int):
             const_objects.append(IntObject(exp_const))
         elif isinstance(exp_const, builtins.str):
@@ -449,6 +449,54 @@ def test_functions():
             make(Opcode.POP, []),
         ],
     )
+    run_compiler_test(
+        "let onearg = fn(a) { a; }; onearg(24);",
+        [
+            concat_insts(
+                [
+                    make(Opcode.GETLOCAL, [0]),
+                    make(Opcode.RETURNVALUE, []),
+                ]
+            ),
+            24
+        ],
+        [
+            make(Opcode.CONSTANT, [0]),
+            make(Opcode.SETGLOBAL, [0]),
+            make(Opcode.GETGLOBAL, [0]),
+            make(Opcode.CONSTANT, [1]),
+            make(Opcode.CALL, [1]),
+            make(Opcode.POP, []),
+        ],
+    )
+    run_compiler_test(
+        "let onearg = fn(a, b, c) { a; b; c; }; onearg(24, 25, 26);",
+        [
+            concat_insts(
+                [
+                    make(Opcode.GETLOCAL, [0]),
+                    make(Opcode.POP, []),
+                    make(Opcode.GETLOCAL, [1]),
+                    make(Opcode.POP, []),
+                    make(Opcode.GETLOCAL, [2]),
+                    make(Opcode.RETURNVALUE, []),
+                ]
+            ),
+            24,
+            25,
+            26,
+        ],
+        [
+            make(Opcode.CONSTANT, [0]),
+            make(Opcode.SETGLOBAL, [0]),
+            make(Opcode.GETGLOBAL, [0]),
+            make(Opcode.CONSTANT, [1]),
+            make(Opcode.CONSTANT, [2]),
+            make(Opcode.CONSTANT, [3]),
+            make(Opcode.CALL, [3]),
+            make(Opcode.POP, []),
+        ],
+    )
 
 
 def test_scopes():
@@ -491,7 +539,7 @@ def test_calls():
         ],
         [
             make(Opcode.CONSTANT, [1]),
-            make(Opcode.CALL, []),
+            make(Opcode.CALL, [0]),
             make(Opcode.POP, []),
         ],
     )
@@ -510,7 +558,7 @@ def test_calls():
             make(Opcode.CONSTANT, [1]),
             make(Opcode.SETGLOBAL, [0]),
             make(Opcode.GETGLOBAL, [0]),
-            make(Opcode.CALL, []),
+            make(Opcode.CALL, [0]),
             make(Opcode.POP, []),
         ],
     )
@@ -532,7 +580,7 @@ def test_calls():
             make(Opcode.CONSTANT, [2]),
             make(Opcode.SETGLOBAL, [0]),
             make(Opcode.GETGLOBAL, [0]),
-            make(Opcode.CALL, []),
+            make(Opcode.CALL, [0]),
             make(Opcode.POP, []),
         ],
     )
