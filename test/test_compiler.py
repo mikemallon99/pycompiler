@@ -646,3 +646,21 @@ def test_local_vars():
         ],
     )
 
+def test_builtins():
+    run_compiler_test(
+        "len([]); push([], 1);",
+        [
+            1
+        ],
+        [
+            make(Opcode.GETBUILTIN, [0]),
+            make(Opcode.ARRAY, [0]),
+            make(Opcode.CALL, [1]),
+            make(Opcode.POP, []),
+            make(Opcode.GETBUILTIN, [4]),
+            make(Opcode.ARRAY, [0]),
+            make(Opcode.CONSTANT, [0]),
+            make(Opcode.CALL, [2]),
+            make(Opcode.POP, []),
+        ],
+    )

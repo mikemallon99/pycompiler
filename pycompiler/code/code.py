@@ -22,6 +22,7 @@ class Opcode(Enum):
     SETGLOBAL = auto()
     GETLOCAL = auto()
     SETLOCAL = auto()
+    GETBUILTIN = auto()
     ARRAY = auto()
     MAP = auto()
     INDEX = auto()
@@ -76,6 +77,7 @@ def read_operands(op: Opcode, operands: bytearray) -> Tuple[List[int], int]:
     if (
         op == Opcode.GETLOCAL
         or op == Opcode.SETLOCAL
+        or op == Opcode.GETBUILTIN
         or op == Opcode.CALL
     ):
         return [int.from_bytes(operands[0:1], byteorder="big")], 1
@@ -101,6 +103,7 @@ def make(op: Opcode, operands: List[int] = []) -> Instructions:
     elif (
         op == Opcode.GETLOCAL
         or op == Opcode.SETLOCAL
+        or op == Opcode.GETBUILTIN
         or op == Opcode.CALL
     ):
         instruction += bytearray(1)

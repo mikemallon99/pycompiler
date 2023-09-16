@@ -1,6 +1,6 @@
 from typing import List, Tuple
 from pycompiler.lexer import TokenType
-from pycompiler.objects import Object, IntObject, StringObject, CompiledFunctionObject
+from pycompiler.objects import Object, IntObject, StringObject, CompiledFunctionObject, BUILTINS
 from pycompiler.code import Instructions, Opcode, make
 from pycompiler.parser import (
     Statement,
@@ -23,7 +23,7 @@ from pycompiler.parser import (
     IdentifierLiteral,
 )
 
-from .symbols import SymbolTable, GLOBALSCOPE, LOCALSCOPE
+from .symbols import SymbolTable, GLOBALSCOPE, LOCALSCOPE, BUILTINSCOPE
 
 
 Bytecode = Tuple[Instructions, List[Object]]
@@ -48,6 +48,8 @@ class Compiler:
         self.constants: List[Object] = []
 
         self.symbol_table: SymbolTable = SymbolTable()
+        for i, (key, builtin) in enumerate(BUILTINS.items()):
+            self.symbol_table.define_builtin(i, builtin.name)
 
         self.scopes: List[CompilerScope] = [CompilerScope()]
         self.scope_index: int = 0
@@ -207,6 +209,8 @@ class Compiler:
                     return f"Cannot resolve identifier {literal.token.token_value}"
                 if symbol.scope == GLOBALSCOPE:
                     self._emit(Opcode.GETGLOBAL, [symbol.index])
+                elif symbol.scope == BUILTINSCOPE:
+                    self._emit(Opcode.GETBUILTIN, [symbol.index])
                 else:
                     self._emit(Opcode.GETLOCAL, [symbol.index])
             case FunctionLiteral():

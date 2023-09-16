@@ -3,6 +3,7 @@ from typing import Dict, Tuple, Any, Optional
 Scope = str
 GLOBALSCOPE: Scope = Scope("GLOBAL")
 LOCALSCOPE: Scope = Scope("LOCAL")
+BUILTINSCOPE: Scope = Scope("BUILTIN")
 
 
 class Symbol:
@@ -37,6 +38,11 @@ class SymbolTable:
             symbol = Symbol(name, GLOBALSCOPE, self.num_defs)
         self.store[name] = symbol
         self.num_defs += 1
+        return symbol
+
+    def define_builtin(self, index: int, name: str) -> Symbol:
+        symbol = Symbol(name, BUILTINSCOPE, index)
+        self.store[name] = symbol
         return symbol
 
     def resolve(self, name) -> Tuple[bool, Symbol | None]:
