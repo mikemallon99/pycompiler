@@ -48,7 +48,7 @@ class Compiler:
         self.constants: List[Object] = []
 
         self.symbol_table: SymbolTable = SymbolTable()
-        for i, (key, builtin) in enumerate(BUILTINS.items()):
+        for i, builtin in enumerate(BUILTINS):
             self.symbol_table.define_builtin(i, builtin.name)
 
         self.scopes: List[CompilerScope] = [CompilerScope()]

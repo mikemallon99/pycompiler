@@ -233,3 +233,18 @@ def test_fn_args():
         "fn (a, b) { a + b; }(1)",
         "wrong number of args: want 2, got 1",
     )
+
+
+def test_builtin_fn():
+    run_vm_test(
+        "len()",
+        "wrong number of args: need 1",
+    )
+    run_vm_test(
+        "len([])",
+        IntObject(0),
+    )
+    run_vm_test(
+        "len([1, 2, 4])",
+        IntObject(3),
+    )

@@ -7,6 +7,8 @@ from pycompiler.objects import (
     ArrayObject,
     MapObject,
     CompiledFunctionObject,
+    Builtin,
+    BUILTINS,
 )
 from pycompiler.compiler import Bytecode
 from pycompiler.code import Instructions, Opcode
@@ -158,6 +160,14 @@ class VM:
                 err = self.push(self.stack[self._current_frame().base_pointer + idx])
                 if err:
                     return err
+            elif op == Opcode.GETBUILTIN:
+                idx = int.from_bytes(
+                    ins[ip + 1 : ip + 2], byteorder="big"
+                )
+                self._current_frame().ip += 1
+                err = self.push(BUILTINS[idx])
+                if err:
+                    return err
             elif op == Opcode.POP:
                 self.pop()
             elif op == Opcode.ARRAY:
@@ -205,14 +215,9 @@ class VM:
                     ins[ip + 1 : ip + 2], byteorder="big"
                 )
                 self._current_frame().ip += 1
-                fn = self.stack[self.sp - num_args - 1]
-                if not isinstance(fn, CompiledFunctionObject):
-                    return "Error attempting to call non-function"
-                if num_args != fn.num_args:
-                    return f"wrong number of args: want {fn.num_args}, got {num_args}"
-                frame = Frame(fn, self.sp - num_args)
-                self._push_frame(frame)
-                self.sp += frame.base_pointer + fn.num_locals
+                err = self._execute_call(num_args)
+                if err:
+                    return err
             elif op == Opcode.RETURNVALUE:
                 value = self.pop()
                 # Return to base ptr & Pop compiled function object from stack
@@ -234,6 +239,33 @@ class VM:
                     return err
 
         return None
+
+    def _execute_call(self, num_args: int) -> Error | None:
+        fn = self.stack[self.sp - num_args - 1]
+        if isinstance(fn, CompiledFunctionObject):
+            return self._execute_function(fn, num_args)
+        elif isinstance(fn, Builtin):
+            return self._execute_builtin(fn, num_args)
+        else:
+            return "Error attempting to call non-function"
+
+    def _execute_function(self, fn: CompiledFunctionObject, num_args: int) -> Error | None:
+        if num_args != fn.num_args:
+            return f"wrong number of args: want {fn.num_args}, got {num_args}"
+        frame = Frame(fn, self.sp - num_args)
+        self._push_frame(frame)
+        self.sp += frame.base_pointer + fn.num_locals
+
+    def _execute_builtin(self, fn: Builtin, num_args: int) -> Error | None:
+        args = self.stack[self.sp - num_args:self.sp]
+        result = fn.func(args)
+        self.sp = self.sp - num_args - 1
+        if isinstance(result, Error):
+            return result
+        err = self.push(result)
+        if err:
+            return err
+
 
     def _execute_binary_op(self, op: Opcode) -> Error | None:
         right: Object = self.pop()

@@ -2,6 +2,7 @@ from pycompiler.compiler import (
     SymbolTable, 
     Symbol, 
     GLOBALSCOPE,
+    BUILTINSCOPE,
     LOCALSCOPE
 )
 
@@ -67,3 +68,25 @@ def test_nested_resolve_local():
     assert local_table_2.resolve("b") == (True, Symbol("b", GLOBALSCOPE, 1))
     assert local_table_2.resolve("e") == (True, Symbol("e", LOCALSCOPE, 0))
     assert local_table_2.resolve("f") == (True, Symbol("f", LOCALSCOPE, 1))
+
+
+def test_resolve_builtin():
+    global_table = SymbolTable()
+    x = global_table.define("a")
+    y = global_table.define("b")
+
+    local_table_1 = SymbolTable(global_table)
+    x = local_table_1.define("c")
+    y = local_table_1.define("d")
+
+    local_table_2 = SymbolTable(local_table_1)
+    x = local_table_2.define("e")
+    y = local_table_2.define("f")
+
+    global_table.define_builtin(0, "x")
+    global_table.define_builtin(1, "y")
+    global_table.define_builtin(2, "z")
+
+    assert local_table_2.resolve("x") == (True, Symbol("x", BUILTINSCOPE, 0))
+    assert local_table_2.resolve("y") == (True, Symbol("y", BUILTINSCOPE, 1))
+    assert local_table_2.resolve("z") == (True, Symbol("z", BUILTINSCOPE, 2))
