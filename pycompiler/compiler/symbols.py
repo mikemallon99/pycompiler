@@ -3,7 +3,9 @@ from typing import Dict, Tuple, Any, Optional
 Scope = str
 GLOBALSCOPE: Scope = Scope("GLOBAL")
 LOCALSCOPE: Scope = Scope("LOCAL")
+FREESCOPE: Scope = Scope("FREE")
 BUILTINSCOPE: Scope = Scope("BUILTIN")
+FUNCTIONSCOPE: Scope = Scope("FUNCTION")
 
 
 class Symbol:
@@ -30,6 +32,7 @@ class SymbolTable:
         self.store: Dict[str, Symbol] = {}
         self.outer = outer
         self.num_defs: int = 0
+        self.free_symbols: List[Symbol] = []
 
     def define(self, name) -> Symbol:
         if self.outer:
@@ -45,9 +48,28 @@ class SymbolTable:
         self.store[name] = symbol
         return symbol
 
+    def define_free(self, original: Symbol) -> Symbol:
+        self.free_symbols.append(original)
+        symbol = Symbol(original.name, FREESCOPE, len(self.free_symbols) - 1)
+        self.store[original.name] = symbol
+        return symbol
+
+    def define_function_name(self, name: str) -> Symbol:
+        symbol = Symbol(name, FUNCTIONSCOPE, 0)
+        self.store[name] = symbol
+        return symbol
+
     def resolve(self, name) -> Tuple[bool, Symbol | None]:
         symbol = self.store.get(name)
         if not symbol and self.outer:
-            return self.outer.resolve(name)
+            _, symbol = self.outer.resolve(name)
+            if not symbol:
+                return bool(symbol), symbol
+
+            if symbol.scope == GLOBALSCOPE or symbol.scope == BUILTINSCOPE:
+                return bool(symbol), symbol
+
+            free = self.define_free(symbol)
+            return True, free
         return bool(symbol), symbol
 

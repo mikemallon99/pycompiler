@@ -23,7 +23,7 @@ from pycompiler.parser import (
     IdentifierLiteral,
 )
 
-from .symbols import SymbolTable, GLOBALSCOPE, LOCALSCOPE, BUILTINSCOPE
+from .symbols import SymbolTable, GLOBALSCOPE, LOCALSCOPE, BUILTINSCOPE, FREESCOPE, FUNCTIONSCOPE
 
 
 Bytecode = Tuple[Instructions, List[Object]]
@@ -64,12 +64,12 @@ class Compiler:
                     # Need to cleanup the expression from the stack once its executed
                     self._emit(Opcode.POP, [])
                 case LetStatement():
+                    symbol = self.symbol_table.define(statement.ident.token_value)
                     err = self._compile_expression(statement.expr)
                     if err:
                         return err
 
                     # Assign result of expression to identifier
-                    symbol = self.symbol_table.define(statement.ident.token_value)
                     if symbol.scope == GLOBALSCOPE:
                         self._emit(Opcode.SETGLOBAL, [symbol.index])
                     else:
@@ -207,16 +207,15 @@ class Compiler:
                 result, symbol = self.symbol_table.resolve(literal.token.token_value)
                 if not result or not symbol:
                     return f"Cannot resolve identifier {literal.token.token_value}"
-                if symbol.scope == GLOBALSCOPE:
-                    self._emit(Opcode.GETGLOBAL, [symbol.index])
-                elif symbol.scope == BUILTINSCOPE:
-                    self._emit(Opcode.GETBUILTIN, [symbol.index])
-                else:
-                    self._emit(Opcode.GETLOCAL, [symbol.index])
+                err = self._load_symbol(symbol)
+                if err:
+                    return err
             case FunctionLiteral():
                 self._enter_scope()
                 for arg in literal.arguments:
                     symbol = self.symbol_table.define(arg.token_value)
+                if literal.name:
+                    self.symbol_table.define_function_name(literal.name)
                 err = self.compile(literal.body.statements)
                 if err:
                     return err
@@ -225,11 +224,28 @@ class Compiler:
                     self._emit(Opcode.RETURNVALUE, [])
                 if not self._last_ins_is(Opcode.RETURNVALUE):
                     self._emit(Opcode.RETURN, [])
+                free_symbols = self.symbol_table.free_symbols
                 num_locals = self.symbol_table.num_defs
                 instructions = self._leave_scope()
-                self._emit(Opcode.CONSTANT, [self._add_constant(CompiledFunctionObject(instructions, num_locals, len(literal.arguments)))])
+
+                for s in free_symbols:
+                    self._load_symbol(s)
+
+                self._emit(Opcode.CLOSURE, [self._add_constant(CompiledFunctionObject(instructions, num_locals, len(literal.arguments))), len(free_symbols)])
             case _:
                 return f"Literal {literal} not implemented"
+
+    def _load_symbol(self, symbol):
+        if symbol.scope == GLOBALSCOPE:
+            self._emit(Opcode.GETGLOBAL, [symbol.index])
+        elif symbol.scope == BUILTINSCOPE:
+            self._emit(Opcode.GETBUILTIN, [symbol.index])
+        elif symbol.scope == FREESCOPE:
+            self._emit(Opcode.GETFREE, [symbol.index])
+        elif symbol.scope == FUNCTIONSCOPE:
+            self._emit(Opcode.CURRENTCLOSURE, [])
+        else:
+            self._emit(Opcode.GETLOCAL, [symbol.index])
 
     def _compile_int(self, literal: IntLiteral):
         integer: IntObject = IntObject(literal.value)

@@ -393,7 +393,7 @@ def test_functions():
             ),
         ],
         [
-            make(Opcode.CONSTANT, [2]),
+            make(Opcode.CLOSURE, [2, 0]),
             make(Opcode.POP, []),
         ],
     )
@@ -412,7 +412,7 @@ def test_functions():
             ),
         ],
         [
-            make(Opcode.CONSTANT, [2]),
+            make(Opcode.CLOSURE, [2, 0]),
             make(Opcode.POP, []),
         ],
     )
@@ -431,7 +431,7 @@ def test_functions():
             ),
         ],
         [
-            make(Opcode.CONSTANT, [2]),
+            make(Opcode.CLOSURE, [2, 0]),
             make(Opcode.POP, []),
         ],
     )
@@ -445,7 +445,7 @@ def test_functions():
             ),
         ],
         [
-            make(Opcode.CONSTANT, [0]),
+            make(Opcode.CLOSURE, [0, 0]),
             make(Opcode.POP, []),
         ],
     )
@@ -461,7 +461,7 @@ def test_functions():
             24
         ],
         [
-            make(Opcode.CONSTANT, [0]),
+            make(Opcode.CLOSURE, [0, 0]),
             make(Opcode.SETGLOBAL, [0]),
             make(Opcode.GETGLOBAL, [0]),
             make(Opcode.CONSTANT, [1]),
@@ -487,7 +487,7 @@ def test_functions():
             26,
         ],
         [
-            make(Opcode.CONSTANT, [0]),
+            make(Opcode.CLOSURE, [0, 0]),
             make(Opcode.SETGLOBAL, [0]),
             make(Opcode.GETGLOBAL, [0]),
             make(Opcode.CONSTANT, [1]),
@@ -538,7 +538,7 @@ def test_calls():
             ),
         ],
         [
-            make(Opcode.CONSTANT, [1]),
+            make(Opcode.CLOSURE, [1, 0]),
             make(Opcode.CALL, [0]),
             make(Opcode.POP, []),
         ],
@@ -555,7 +555,7 @@ def test_calls():
             ),
         ],
         [
-            make(Opcode.CONSTANT, [1]),
+            make(Opcode.CLOSURE, [1, 0]),
             make(Opcode.SETGLOBAL, [0]),
             make(Opcode.GETGLOBAL, [0]),
             make(Opcode.CALL, [0]),
@@ -577,7 +577,7 @@ def test_calls():
             ),
         ],
         [
-            make(Opcode.CONSTANT, [2]),
+            make(Opcode.CLOSURE, [2, 0]),
             make(Opcode.SETGLOBAL, [0]),
             make(Opcode.GETGLOBAL, [0]),
             make(Opcode.CALL, [0]),
@@ -600,7 +600,7 @@ def test_local_vars():
         [
             make(Opcode.CONSTANT, [0]),
             make(Opcode.SETGLOBAL, [0]),
-            make(Opcode.CONSTANT, [1]),
+            make(Opcode.CLOSURE, [1, 0]),
             make(Opcode.POP, []),
         ],
     )
@@ -618,7 +618,7 @@ def test_local_vars():
             ),
         ],
         [
-            make(Opcode.CONSTANT, [1]),
+            make(Opcode.CLOSURE, [1, 0]),
             make(Opcode.POP, []),
         ],
     )
@@ -641,7 +641,7 @@ def test_local_vars():
             ),
         ],
         [
-            make(Opcode.CONSTANT, [2]),
+            make(Opcode.CLOSURE, [2, 0]),
             make(Opcode.POP, []),
         ],
     )
@@ -661,6 +661,164 @@ def test_builtins():
             make(Opcode.ARRAY, [0]),
             make(Opcode.CONSTANT, [0]),
             make(Opcode.CALL, [2]),
+            make(Opcode.POP, []),
+        ],
+    )
+
+def test_closures():
+    run_compiler_test(
+        "fn(a) { return fn(b) {return a + b} }",
+        [
+            concat_insts(
+                [
+                    make(Opcode.GETFREE, [0]),
+                    make(Opcode.GETLOCAL, [0]),
+                    make(Opcode.ADD, []),
+                    make(Opcode.RETURNVALUE, []),
+                ]
+            ),
+            concat_insts(
+                [
+                    make(Opcode.GETLOCAL, [0]),
+                    make(Opcode.CLOSURE, [0, 1]),
+                    make(Opcode.RETURNVALUE, []),
+                ]
+            ),
+        ],
+        [
+            make(Opcode.CLOSURE, [1, 0]),
+            make(Opcode.POP, []),
+        ],
+    )
+    run_compiler_test(
+        "fn(a) { fn(b) { fn(c) {return a + b + c} } }",
+        [
+            concat_insts(
+                [
+                    make(Opcode.GETFREE, [0]),
+                    make(Opcode.GETFREE, [1]),
+                    make(Opcode.ADD, []),
+                    make(Opcode.GETLOCAL, [0]),
+                    make(Opcode.ADD, []),
+                    make(Opcode.RETURNVALUE, []),
+                ]
+            ),
+            concat_insts(
+                [
+                    make(Opcode.GETFREE, [0]),
+                    make(Opcode.GETLOCAL, [0]),
+                    make(Opcode.CLOSURE, [0, 2]),
+                    make(Opcode.RETURNVALUE, []),
+                ]
+            ),
+            concat_insts(
+                [
+                    make(Opcode.GETLOCAL, [0]),
+                    make(Opcode.CLOSURE, [1, 1]),
+                    make(Opcode.RETURNVALUE, []),
+                ]
+            ),
+        ],
+        [
+            make(Opcode.CLOSURE, [2, 0]),
+            make(Opcode.POP, []),
+        ],
+    )
+    run_compiler_test(
+        "let countdown = fn(x) { return countdown(x-1); }; countdown(1);",
+        [
+            1,
+            concat_insts(
+                [
+                    make(Opcode.CURRENTCLOSURE, []),
+                    make(Opcode.GETLOCAL, [0]),
+                    make(Opcode.CONSTANT, [0]),
+                    make(Opcode.SUB, []),
+                    make(Opcode.CALL, [1]),
+                    make(Opcode.RETURNVALUE, []),
+                ]
+            ),
+            1,
+        ],
+        [
+            make(Opcode.CLOSURE, [1, 0]),
+            make(Opcode.SETGLOBAL, [0]),
+            make(Opcode.GETGLOBAL, [0]),
+            make(Opcode.CONSTANT, [2]),
+            make(Opcode.CALL, [1]),
+            make(Opcode.POP, []),
+        ],
+    )
+    run_compiler_test(
+        "let wrapper = fn() {let countdown = fn(x) { return countdown(x-1); }; countdown(1);}; wrapper()",
+        [
+            1,
+            concat_insts(
+                [
+                    make(Opcode.CURRENTCLOSURE, []),
+                    make(Opcode.GETLOCAL, [0]),
+                    make(Opcode.CONSTANT, [0]),
+                    make(Opcode.SUB, []),
+                    make(Opcode.CALL, [1]),
+                    make(Opcode.RETURNVALUE, []),
+                ]
+            ),
+            1,
+            concat_insts(
+                [
+                    make(Opcode.CLOSURE, [1, 0]),
+                    make(Opcode.SETLOCAL, [0]),
+                    make(Opcode.GETLOCAL, [0]),
+                    make(Opcode.CONSTANT, [2]),
+                    make(Opcode.CALL, [1]),
+                    make(Opcode.RETURNVALUE, []),
+                ]
+            ),
+        ],
+        [
+            make(Opcode.CLOSURE, [3, 0]),
+            make(Opcode.SETGLOBAL, [0]),
+            make(Opcode.GETGLOBAL, [0]),
+            make(Opcode.CALL, [0]),
+            make(Opcode.POP, []),
+        ],
+    )
+
+def test_fibonacci():
+    run_compiler_test(
+        """
+        let fibonacci = fn(x) {
+            fibonacci(x - 1) + fibonacci(x - 2);
+        };
+        fibonacci(15);
+        """,
+        [
+            1,
+            2,
+            concat_insts(
+                [
+                    make(Opcode.CURRENTCLOSURE, []),
+                    make(Opcode.GETLOCAL, [0]),
+                    make(Opcode.CONSTANT, [0]),
+                    make(Opcode.SUB, []),
+                    make(Opcode.CALL, [1]),
+                    make(Opcode.CURRENTCLOSURE, []),
+                    make(Opcode.GETLOCAL, [0]),
+                    make(Opcode.CONSTANT, [1]),
+                    make(Opcode.SUB, []),
+                    make(Opcode.CALL, [1]),
+                    make(Opcode.ADD, [0]),
+                    make(Opcode.RETURNVALUE, []),
+                ]
+            ),
+            15,
+        ],
+        [
+            make(Opcode.CLOSURE, [2, 0]),
+            make(Opcode.SETGLOBAL, [0]),
+            make(Opcode.GETGLOBAL, [0]),
+            make(Opcode.CONSTANT, [3]),
+            make(Opcode.CALL, [1]),
             make(Opcode.POP, []),
         ],
     )

@@ -23,12 +23,15 @@ class Opcode(Enum):
     GETLOCAL = auto()
     SETLOCAL = auto()
     GETBUILTIN = auto()
+    GETFREE = auto()
     ARRAY = auto()
     MAP = auto()
     INDEX = auto()
     CALL = auto()
     RETURNVALUE = auto()
     RETURN = auto()
+    CLOSURE = auto()
+    CURRENTCLOSURE = auto()
     NULL = auto()
 
 
@@ -74,13 +77,16 @@ def read_operands(op: Opcode, operands: bytearray) -> Tuple[List[int], int]:
         or op == Opcode.MAP
     ):
         return [int.from_bytes(operands[0:2], byteorder="big")], 2
-    if (
+    elif (
         op == Opcode.GETLOCAL
         or op == Opcode.SETLOCAL
         or op == Opcode.GETBUILTIN
+        or op == Opcode.GETFREE
         or op == Opcode.CALL
     ):
         return [int.from_bytes(operands[0:1], byteorder="big")], 1
+    elif op == Opcode.CLOSURE:
+        return [int.from_bytes(operands[0:2], byteorder="big"), int.from_bytes(operands[2:3], byteorder="big")], 3
     else:
         return [], 0
 
@@ -104,9 +110,14 @@ def make(op: Opcode, operands: List[int] = []) -> Instructions:
         op == Opcode.GETLOCAL
         or op == Opcode.SETLOCAL
         or op == Opcode.GETBUILTIN
+        or op == Opcode.GETFREE
         or op == Opcode.CALL
     ):
         instruction += bytearray(1)
         instruction[1:] = operands[0].to_bytes(1, byteorder="big")
+    elif op == Opcode.CLOSURE:
+        instruction += bytearray(3)
+        instruction[1:3] = operands[0].to_bytes(2, byteorder="big")
+        instruction[3:] = operands[1].to_bytes(1, byteorder="big")
 
     return instruction

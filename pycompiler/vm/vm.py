@@ -7,6 +7,7 @@ from pycompiler.objects import (
     ArrayObject,
     MapObject,
     CompiledFunctionObject,
+    ClosureObject,
     Builtin,
     BUILTINS,
 )
@@ -22,20 +23,20 @@ Error = str
 
 
 class Frame:
-    def __init__(self, fn, base_pointer: int) -> None:
+    def __init__(self, cl, base_pointer: int) -> None:
         self.ip: int = -1
-        self.fn: CompiledFunctionObject = fn
+        self.cl: ClosureObject = cl
         self.base_pointer: int = base_pointer
 
     def get_instructions(self) -> Instructions:
-        return self.fn.value
+        return self.cl.func.value
 
 
 class VM:
     def __init__(self, bytecode: Bytecode):
         self.constants: List[Object] = bytecode[1]
 
-        self.frames: List[Frame] = [Frame(CompiledFunctionObject(bytecode[0], 0, 0), 0)]
+        self.frames: List[Frame] = [Frame(ClosureObject(CompiledFunctionObject(bytecode[0], 0, 0), []), 0)]
         self.frame_index: int = 0
 
         self.stack: List[Object] = [Object()] * STACK_SIZE
@@ -81,6 +82,20 @@ class VM:
                 )
                 self._current_frame().ip += 2
                 err = self.push(self.constants[index])
+                if err:
+                    return err
+            elif op == Opcode.CLOSURE:
+                index = int.from_bytes(
+                    ins[ip + 1 : ip + 3], byteorder="big"
+                )
+                num_free = int.from_bytes(
+                    ins[ip + 3 : ip + 4], byteorder="big"
+                )
+                self._current_frame().ip += 3
+                free = []
+                for i in range(0, num_free):
+                    free.append(self.stack[self.sp-num_free+i])
+                err = self.push(ClosureObject(self.constants[index], free))
                 if err:
                     return err
             elif (
@@ -168,6 +183,18 @@ class VM:
                 err = self.push(BUILTINS[idx])
                 if err:
                     return err
+            elif op == Opcode.GETFREE:
+                idx = int.from_bytes(
+                    ins[ip + 1 : ip + 2], byteorder="big"
+                )
+                self._current_frame().ip += 1
+                err = self.push(self._current_frame().cl.free[idx])
+                if err:
+                    return err
+            elif op == Opcode.CURRENTCLOSURE:
+                err = self.push(self._current_frame().cl)
+                if err:
+                    return err
             elif op == Opcode.POP:
                 self.pop()
             elif op == Opcode.ARRAY:
@@ -242,19 +269,19 @@ class VM:
 
     def _execute_call(self, num_args: int) -> Error | None:
         fn = self.stack[self.sp - num_args - 1]
-        if isinstance(fn, CompiledFunctionObject):
-            return self._execute_function(fn, num_args)
+        if isinstance(fn, ClosureObject):
+            return self._execute_closure(fn, num_args)
         elif isinstance(fn, Builtin):
             return self._execute_builtin(fn, num_args)
         else:
             return "Error attempting to call non-function"
 
-    def _execute_function(self, fn: CompiledFunctionObject, num_args: int) -> Error | None:
-        if num_args != fn.num_args:
-            return f"wrong number of args: want {fn.num_args}, got {num_args}"
-        frame = Frame(fn, self.sp - num_args)
+    def _execute_closure(self, cl: ClosureObject, num_args: int) -> Error | None:
+        if num_args != cl.func.num_args:
+            return f"wrong number of args: want {cl.func.num_args}, got {num_args}"
+        frame = Frame(cl, self.sp - num_args)
         self._push_frame(frame)
-        self.sp += frame.base_pointer + fn.num_locals
+        self.sp = frame.base_pointer + cl.func.num_locals
 
     def _execute_builtin(self, fn: Builtin, num_args: int) -> Error | None:
         args = self.stack[self.sp - num_args:self.sp]

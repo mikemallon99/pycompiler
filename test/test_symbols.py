@@ -3,6 +3,7 @@ from pycompiler.compiler import (
     Symbol, 
     GLOBALSCOPE,
     BUILTINSCOPE,
+    FREESCOPE,
     LOCALSCOPE
 )
 
@@ -90,3 +91,24 @@ def test_resolve_builtin():
     assert local_table_2.resolve("x") == (True, Symbol("x", BUILTINSCOPE, 0))
     assert local_table_2.resolve("y") == (True, Symbol("y", BUILTINSCOPE, 1))
     assert local_table_2.resolve("z") == (True, Symbol("z", BUILTINSCOPE, 2))
+
+
+def test_resolve_free():
+    global_table = SymbolTable()
+    x = global_table.define("a")
+    y = global_table.define("b")
+
+    local_table_1 = SymbolTable(global_table)
+    x = local_table_1.define("c")
+    y = local_table_1.define("d")
+
+    local_table_2 = SymbolTable(local_table_1)
+    x = local_table_2.define("e")
+    y = local_table_2.define("f")
+
+    assert local_table_2.resolve("a") == (True, Symbol("a", GLOBALSCOPE, 0))
+    assert local_table_2.resolve("b") == (True, Symbol("b", GLOBALSCOPE, 1))
+    assert local_table_2.resolve("c") == (True, Symbol("c", FREESCOPE, 0))
+    assert local_table_2.resolve("d") == (True, Symbol("d", FREESCOPE, 1))
+    assert local_table_2.resolve("e") == (True, Symbol("e", LOCALSCOPE, 0))
+    assert local_table_2.resolve("f") == (True, Symbol("f", LOCALSCOPE, 1))

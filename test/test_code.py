@@ -26,15 +26,23 @@ def test_make_add():
     assert instruction[1:] == bytearray()
 
 
+def test_make_closure():
+    instruction: Instructions = make(Opcode.CLOSURE, [65534, 255])
+    assert instruction[0] == Opcode.CLOSURE.value
+    assert instruction[1:3] == (65534).to_bytes(2, byteorder="big")
+    assert instruction[3:] == (255).to_bytes(1, byteorder="big")
+
+
 def test_instr_strings():
     instructions: List[Instructions] = [
         make(Opcode.ADD, []),
         make(Opcode.CONSTANT, [2]),
         make(Opcode.CONSTANT, [65535]),
         make(Opcode.GETLOCAL, [255]),
+        make(Opcode.CLOSURE, [65534, 255]),
     ]
 
-    expected = "0000 ADD\n" "0001 CONSTANT 2\n" "0004 CONSTANT 65535\n" "0007 GETLOCAL 255\n"
+    expected = "0000 ADD\n" "0001 CONSTANT 2\n" "0004 CONSTANT 65535\n" "0007 GETLOCAL 255\n" "0009 CLOSURE 65534 255\n"
 
     concatted: Instructions = bytearray()
     for ins in instructions:

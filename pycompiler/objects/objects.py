@@ -123,6 +123,12 @@ class CompiledFunctionObject(Object):
         return f"<CompiledFunctionObject: value={instructions_to_str(self.value)}>"
 
 
+class ClosureObject(Object):
+    def __init__(self, func, free):
+        self.func = func
+        self.free = free
+
+
 class BooleanObject(Object):
     def __init__(self, value: bool):
         self.value: bool = value

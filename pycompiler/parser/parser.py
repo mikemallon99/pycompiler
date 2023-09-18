@@ -53,6 +53,8 @@ class LetStatement(Statement):
         assert ident.token_type == TokenType.IDENT
         self.ident: Token = ident
         self.expr: Expression = expr
+        if isinstance(self.expr, LiteralExpression) and isinstance(self.expr.literal, FunctionLiteral):
+            self.expr.literal.name = self.ident.token_value
 
     def __eq__(self, other: object):
         if not isinstance(other, LetStatement):
@@ -151,6 +153,7 @@ class FunctionLiteral(Literal):
     def __init__(self, arguments: List[Token], body: BlockStatement):
         self.arguments: List[Token] = arguments
         self.body: BlockStatement = body
+        self.name: str = ""
 
     def __eq__(self, other: object):
         if not isinstance(other, FunctionLiteral):

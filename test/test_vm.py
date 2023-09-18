@@ -248,3 +248,120 @@ def test_builtin_fn():
         "len([1, 2, 4])",
         IntObject(3),
     )
+
+
+def test_closures():
+    run_vm_test(
+        "let newclosure = fn(a) {fn() {a}}; newclosure(99)()",
+        IntObject(99),
+    )
+    run_vm_test(
+        "let newclosure = fn(a) {fn(b) {fn(c) {a + b + c}}}; newclosure(1)(2)(3)",
+        IntObject(6),
+    )
+    run_vm_test(
+        "let countdown = fn(x) {if (x==0) { return 0; } else { countdown(x-1);}; }; countdown(1)",
+        IntObject(0),
+    )
+    run_vm_test(
+        """
+        let countDown = fn(x) {
+            if (x == 0) {
+                return 0;
+            } else {
+                countDown(x - 1);
+            }
+        };
+        let wrapper = fn() {
+            countDown(1);
+        };
+        wrapper();
+        """,
+        IntObject(0),
+    )
+    run_vm_test(
+        """
+        let wrapper = fn() {
+            let countDown = fn(x) {
+                if (x == 0) {
+                    return 0;
+                } else {
+                    countDown(x - 1);
+                }
+            };
+            countDown(1);
+        };
+        wrapper();
+        """,
+        IntObject(0),
+    )
+
+def test_fibonacci():
+    run_vm_test(
+        """
+        let fibonacci = fn(x) {
+            if (x == 0) {
+                return 0;
+            } else {
+                if (x == 1) {
+                    return 1;
+                } else {
+                    fibonacci(x - 1) + fibonacci(x - 2);
+                }
+            }
+        };
+        fibonacci(0);
+        """,
+        IntObject(0),
+    )
+    run_vm_test(
+        """
+        let fibonacci = fn(x) {
+            if (x == 0) {
+                return 0;
+            } else {
+                if (x == 1) {
+                    return 1;
+                } else {
+                    fibonacci(x - 1) + fibonacci(x - 2);
+                }
+            }
+        };
+        fibonacci(1);
+        """,
+        IntObject(1),
+    )
+    run_vm_test(
+        """
+        let fibonacci = fn(x) {
+            if (x == 0) {
+                return 0;
+            } else {
+                if (x == 1) {
+                    return 1;
+                } else {
+                    fibonacci(x - 1) + fibonacci(x - 2);
+                }
+            }
+        };
+        fibonacci(2);
+        """,
+        IntObject(1),
+    )
+    run_vm_test(
+        """
+        let fibonacci = fn(x) {
+            if (x == 0) {
+                return 0;
+            } else {
+                if (x == 1) {
+                    return 1;
+                } else {
+                    fibonacci(x - 1) + fibonacci(x - 2);
+                }
+            }
+        };
+        fibonacci(15);
+        """,
+        IntObject(610),
+    )
